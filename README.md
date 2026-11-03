@@ -206,7 +206,7 @@ Change models in the app under **Settings**, or in `.env`. Other limits are in `
 
 OpenAI standard prices per 1M tokens (input / output), from [OpenAI's pricing page](https://developers.openai.com/api/docs/pricing) on 3 Nov 2026: `gpt-4.1` $2.00 / $8.00, `gpt-4o` $2.50 / $10.00, `gpt-4.1-mini` $0.40 / $1.60, `text-embedding-3-small` $0.02. The reranker runs locally and is free.
 
-Measured runs: a 2-page scanned invoice with 11 fields cost **$0.074**, a 4-page bank statement with 13 fields cost **$0.206**. About 85% of that is the QC checker (one gpt-4o call per field, with page text and page pictures). Every run shows its token count in the run header; the [explainer](docs/parseproof-explained.html) has the full breakdown.
+Measured runs: a 2-page scanned invoice with 11 fields cost **$0.074**, a 4-page bank statement with 13 fields cost **$0.206**. About 85% of that is the QC checker (one gpt-4o call per field, with page text and page pictures). The app shows each run's tokens and estimated cost in the run header (click it for the split per model) and in the Runs list, and the Excel export has a `Cost (USD)` column on the `Runs` sheet. The prices live in `PRICES` in `config.py`: update them there when OpenAI changes them, and older runs are re-priced too. A model with no price there is left out of the total. The [explainer](docs/parseproof-explained.html) has the full breakdown.
 
 ## Limits
 

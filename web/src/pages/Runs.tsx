@@ -7,7 +7,7 @@ import { api, type RunListItem } from "@/api";
 import { Button, PageHeader, ProgressBar, Skeleton } from "@/components/ui";
 import ExportMenu from "@/components/ExportMenu";
 import { useToast } from "@/components/toast";
-import { duration, relativeTime } from "@/lib/format";
+import { duration, relativeTime, usd } from "@/lib/format";
 
 function Outcome({ run }: { run: RunListItem }) {
   if (run.status === "queued" || run.status === "running") {
@@ -45,7 +45,11 @@ function Outcome({ run }: { run: RunListItem }) {
         </span>
       )}
       {attention === 0 && <span className="text-xs text-ink-3">{duration(run.seconds)}</span>}
-      {run.tokens != null && <span className="text-xs tabular-nums text-ink-3">{run.tokens.toLocaleString()} tokens</span>}
+      {run.tokens != null && (
+        <span className="text-xs tabular-nums text-ink-3">
+          {run.tokens.toLocaleString()} tokens{run.cost_usd != null && ` · ${usd(run.cost_usd)}`}
+        </span>
+      )}
     </div>
   );
 }

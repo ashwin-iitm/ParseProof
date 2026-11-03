@@ -232,6 +232,7 @@ def list_runs(batch_id: Optional[str] = None) -> List[Dict[str, Any]]:
                    json_extract(r.report, '$.summary') AS summary,
                    json_extract(r.report, '$.seconds') AS seconds,
                    json_extract(r.report, '$.usage.total') AS tokens,
+                   json_extract(r.report, '$.usage') AS usage,
                    d.filename, d.pages, b.name AS batch_name
             FROM runs r JOIN documents d ON d.id = r.document_id
             LEFT JOIN batches b ON b.id = r.batch_id
@@ -241,6 +242,7 @@ def list_runs(batch_id: Optional[str] = None) -> List[Dict[str, Any]]:
     for r in rows:
         item = _row(r)
         item["summary"] = json.loads(item["summary"]) if item.get("summary") else None
+        item["usage"] = json.loads(item["usage"]) if item.get("usage") else None
         out.append(item)
     return out
 

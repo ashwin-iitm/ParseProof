@@ -23,6 +23,8 @@ from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from config import usage_cost
+
 STATUS_LABEL = {"PASS": "Verified", "FAIL": "Mismatch", "REVIEW": "Needs review", "NOT_CHECKED": "Not checked"}
 SOURCE_LABEL = {"extracted": "Extracted", "verified": "QC corrected", "manual": "Edited by reviewer"}
 RUN_STATUS_LABEL = {"done": "Complete", "failed": "Failed", "queued": "Queued", "running": "Running"}
@@ -97,6 +99,7 @@ def run_summary(run: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, An
         "tokens_in": (report.get("usage") or {}).get("input"),
         "tokens_out": (report.get("usage") or {}).get("output"),
         "tokens": (report.get("usage") or {}).get("total"),
+        "cost_usd": round(usage_cost(report["usage"])["cost_usd"], 4) if report.get("usage") else None,
     }
 
 
@@ -337,16 +340,16 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
     # Runs: how each document was processed
     log = wb.create_sheet("Runs")
     _header(log, ["Document", "Template", "Batch", "Run status", "Error", "Pages", "Seconds", "LLM calls",
-                  "Tokens in", "Tokens out", "Tokens total", "Pages sent to QC", "OCR pages", "Extract model", "QC model", "Started", "Finished", "Approved at", "Run ID"])
+                  "Tokens in", "Tokens out", "Tokens total", "Cost (USD)", "Pages sent to QC", "OCR pages", "Extract model", "QC model", "Started", "Finished", "Approved at", "Run ID"])
     for run, rows in per_run:
         s = run_summary(run, rows)
         log.append([run["filename"], run.get("template_name"), run.get("batch_name"),
                     RUN_STATUS_LABEL.get(run["status"], run["status"]), run.get("error"), run.get("pages"), s["seconds"],
-                    s["llm_calls"], s["tokens_in"], s["tokens_out"], s["tokens"], s["pages_sent_to_qc"], ", ".join(map(str, s["ocr_pages"])) or None,
+                    s["llm_calls"], s["tokens_in"], s["tokens_out"], s["tokens"], s["cost_usd"], s["pages_sent_to_qc"], ", ".join(map(str, s["ocr_pages"])) or None,
                     s["models"].get("extract"), s["models"].get("qc"), iso(run.get("created_at")),
                     iso(run.get("finished_at")), iso(run.get("approved_at")), run["id"]])
-    _widths(log, {1: 34, 2: 20, 3: 20, 4: 11, 5: 30, 6: 7, 7: 9, 8: 9, 9: 10, 10: 10, 11: 12, 12: 10, 13: 12,
-                  14: 14, 15: 12, 16: 17, 17: 17, 18: 17, 19: 14})
+    _widths(log, {1: 34, 2: 20, 3: 20, 4: 11, 5: 30, 6: 7, 7: 9, 8: 9, 9: 10, 10: 10, 11: 12, 12: 11, 13: 10,
+                  14: 12, 15: 14, 16: 12, 17: 17, 18: 17, 19: 17, 20: 14})
     log.freeze_panes = "B2"
 
     # Key: what the colours and columns mean
@@ -372,7 +375,7 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
         ("Data", "One row per document, one column per field. Numbers are stored as numbers so totals work."),
         ("QC status", "The same grid with the QC result for every value."),
         ("QC detail", "One row per field per document: extracted value, QC value, evidence page and quote, notes."),
-        ("Runs", "Processing details per document: time, model calls, tokens used, pages checked, errors."),
+        ("Runs", "Processing details per document: time, model calls, tokens used, estimated OpenAI cost in US dollars, pages checked, errors."),
     ]:
         key.append([label, text])
         key.cell(key.max_row, 1).font = Font(bold=True)

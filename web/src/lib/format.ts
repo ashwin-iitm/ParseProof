@@ -38,3 +38,9 @@ export function duration(seconds: number | null | undefined): string {
 }
 
 export const show = (v: unknown): string => (v === null || v === undefined || v === "" ? "—" : String(v));
+
+/** Run costs are cents, so show three decimals below a dollar: $0.074, $1.25. */
+export function usd(value: number): string {
+  if (value > 0 && value < 0.001) return "<$0.001";
+  return `$${value.toFixed(value < 1 ? 3 : 2)}`;
+}

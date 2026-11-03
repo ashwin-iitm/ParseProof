@@ -63,6 +63,7 @@ export interface RunListItem {
   summary: Summary | null;
   seconds: number | null;
   tokens: number | null;
+  cost_usd: number | null;
   filename: string;
   pages: number | null;
   batch_id: string | null;
@@ -174,7 +175,10 @@ export interface Usage {
   input: number;
   output: number;
   total: number;
-  models: Record<string, { calls: number; input: number; output: number; total: number }>;
+  models: Record<string, { calls: number; input: number; output: number; total: number; cost_usd?: number | null }>;
+  cost_usd?: number;
+  priced_all?: boolean;
+  prices_checked?: string;
 }
 
 export interface ReviewDecision {
@@ -183,7 +187,7 @@ export interface ReviewDecision {
   at: number;
 }
 
-export interface Run extends Omit<RunListItem, "summary" | "seconds" | "tokens" | "batch_name"> {
+export interface Run extends Omit<RunListItem, "summary" | "seconds" | "tokens" | "cost_usd" | "batch_name"> {
   template: { fields: Field[]; rules: SumRule[] };
   report: Report | null;
   content_type: string;

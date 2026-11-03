@@ -109,3 +109,32 @@ def record_usage(model: str, usage) -> None:
     if out is None:
         out = getattr(usage, "completion_tokens", 0) or 0
     meter.add(model, int(inp or 0), int(out or 0))
+
+
+# -----------------------------
+# PRICES (USD per 1M tokens, OpenAI standard tier)
+# -----------------------------
+# From https://developers.openai.com/api/docs/pricing on 2026-11-03. Update here when OpenAI
+# changes them; costs are worked out when a run is shown, so old runs use the new prices too.
+PRICES_CHECKED = "2026-11-03"
+PRICES = {
+    "gpt-4.1": {"input": 2.00, "output": 8.00},
+    "gpt-4.1-mini": {"input": 0.40, "output": 1.60},
+    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "text-embedding-3-small": {"input": 0.02, "output": 0.0},
+}
+
+
+def usage_cost(usage: dict) -> dict:
+    """Adds cost_usd to each model and a total. A model missing from PRICES gets None, and the
+    total then only covers the priced ones (priced_all says whether that is everything)."""
+    models, total, priced_all = {}, 0.0, True
+    for name, m in (usage.get("models") or {}).items():
+        price = PRICES.get(name)
+        cost = None if price is None else (m["input"] * price["input"] + m["output"] * price["output"]) / 1e6
+        if cost is None:
+            priced_all = False
+        else:
+            total += cost
+        models[name] = {**m, "cost_usd": cost}
+    return {**usage, "models": models, "cost_usd": total, "priced_all": priced_all, "prices_checked": PRICES_CHECKED}

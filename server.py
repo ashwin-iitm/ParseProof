@@ -362,7 +362,11 @@ def create_run(body: RunIn):
 
 @app.get("/api/runs")
 def list_runs():
-    return db.list_runs()
+    runs = db.list_runs()
+    for r in runs:
+        usage = r.pop("usage", None)
+        r["cost_usd"] = config.usage_cost(usage)["cost_usd"] if usage else None
+    return runs
 
 
 def resolved(run: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -390,6 +394,8 @@ def slim(run: Dict[str, Any]) -> Dict[str, Any]:
     results = [{**{k: v for k, v in r.items() if k != "qc_calls"}, "qc_call_count": len(r.get("qc_calls") or [])}
                for r in report.get("results", [])]
     run["report"] = {**report, "results": results, "page_texts": {} if is_pdf else report.get("page_texts", {})}
+    if report.get("usage"):
+        run["report"]["usage"] = config.usage_cost(report["usage"])
     return run
 
 
