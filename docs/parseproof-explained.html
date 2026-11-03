@@ -201,8 +201,8 @@ footer { color: var(--ink-3); font-size: 14px; }
     </div>
     <div class="answer">
       <span class="q">Does the checker AI read the whole document?</span>
-      <span class="a">No. Only 1 to 4 pages per field.</span>
-      <p>It gets the text and a picture of the page the answer came from, or of the pages the search found. That keeps it focused and cheap.</p>
+      <span class="a">No. Usually just the one page each answer came from.</span>
+      <p>It gets that page's text, with all the fields found on it in one call. Empty fields are checked on up to 4 pages the search finds; a field that still isn't confirmed gets its page plus up to 3 searched pages, with up to 2 page pictures. That keeps it focused and cheap.</p>
     </div>
   </div>
 </section>
@@ -739,7 +739,7 @@ Source pages:
         <tr><td>Building the index</td><td><code>text-embedding-3-small</code></td><td>The text of <b>every page</b>, up to 24,000 characters each</td><td>First run of a file</td></tr>
         <tr><td>Extraction</td><td><code>gpt-4.1</code></td><td>The PDF file in pieces of up to 40 pages, or Python's text for Excel/Word/CSV, plus the field list</td><td>Every run</td></tr>
         <tr><td>Self-check</td><td><code>gpt-4.1</code></td><td>The text and picture of a page whose quote wasn't found</td><td>Rarely</td></tr>
-        <tr><td>QC check</td><td><code>gpt-4.1-mini</code></td><td>One field's name, description and value, with the text and pictures of 1 to 4 pages</td><td>Once or twice per field</td></tr>
+        <tr><td>QC check</td><td><code>gpt-4.1-mini</code></td><td>Page check: the names, descriptions and values of the fields on one page, with that page's text (and its picture if it's a scan). Full check: one field, with the text of its pages and up to 2 page pictures</td><td>One call per page with fields, one for all empty fields, then up to 3 per field not yet confirmed</td></tr>
         <tr><td>QC search</td><td><code>text-embedding-3-small</code></td><td>The search question (field name, description, extracted value)</td><td>Only when a search runs</td></tr>
         <tr><td>Create with AI (templates)</td><td><code>gpt-4.1</code></td><td>Your description, and the first 30 pages of a sample document if you attach one</td><td>Only when you use it</td></tr>
         <tr><td>Settings → test key</td><td>none</td><td>Asks OpenAI for its list of models, to check the key works. No document data.</td><td>When you click it</td></tr>
@@ -757,7 +757,7 @@ Source pages:
       <thead><tr><th style="width:24%">Job</th><th>Model</th><th>Input · per 1M tokens</th><th>Output · per 1M tokens</th><th>Why this model</th></tr></thead>
       <tbody>
         <tr><td>Extraction, self-check, templates</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>Reads PDF files directly; read page numbers correctly in our tests where gpt-4o didn't</td></tr>
-        <tr><td>QC checker (default)</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>A separate, smaller model from the extractor, at a fifth of the price. Judging a value on 1 to 4 pages is a narrower job than reading a whole document.</td></tr>
+        <tr><td>QC checker (default)</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>A separate, smaller model from the extractor, at a fifth of the price. Judging values on one or a few pages is a narrower job than reading a whole document.</td></tr>
         <tr><td>QC checker (optional)</td><td><code>gpt-4o</code></td><td class="num">$2.50</td><td class="num">$10.00</td><td>A different model family from the extractor, so it shares fewer blind spots. About 5 times the QC cost.</td></tr>
         <tr><td>OCR</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>Typing out a page is easy work</td></tr>
         <tr><td>Embeddings</td><td><code>text-embedding-3-small</code></td><td class="num">$0.02</td><td class="num">—</td><td>Almost free: all 60 pages cost a fraction of a cent</td></tr>
