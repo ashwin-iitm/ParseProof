@@ -55,7 +55,7 @@ _INDEXES: Dict[str, PageIndex] = {}
 PASS, FAIL, REVIEW, NOT_CHECKED = "PASS", "FAIL", "REVIEW", "NOT_CHECKED"
 OCR_MIN_CHARS = 25  # a PDF page with less text than this is treated as a scan
 INDEX_VERSION = 3  # bump when page text extraction changes (v3: column-aware text blocks)
-QC_MAX_IMAGES = 4  # page images sent to the QC model per verification
+QC_MAX_IMAGES = 2  # page images sent with a full check (the text of every page it reads is sent too)
 QC_IMAGE_DPI = 110
 
 
@@ -213,6 +213,7 @@ class PipelineState(TypedDict, total=False):
     extract_jobs: List[List[int]]
     extraction_candidates: Annotated[List[dict], operator.add]
     qc_results: Annotated[List[dict], operator.add]
+    qc_pending: Annotated[List[dict], operator.add]
     llm_calls: Annotated[int, operator.add]
     final_results: List[dict]
     report: dict
@@ -595,8 +596,9 @@ def route_after_search(s: FieldQCState) -> str:
 
 def route_after_verify(s: FieldQCState) -> str:
     v = (s.get("verdict") or {}).get("verdict")
-    # "incorrect" also searches: if the extractor cited the wrong clause, the real value is elsewhere
-    needs_more = v in ("not_found", "incorrect") or not s.get("evidence_ok")
+    # Not found, or a proof Python couldn't confirm: search other pages once. A correction whose proof
+    # Python confirmed on the page is already settled (it becomes a Mismatch), so it doesn't search.
+    needs_more = v == "not_found" or not s.get("evidence_ok")
     return "search" if needs_more and not s.get("searched") else "finalize"
 
 
@@ -618,9 +620,144 @@ QC_AGENT = build_qc_agent()
 
 
 def qc_field(payload: dict) -> dict:
-    out = QC_AGENT.invoke({**payload, "notes": [], "pages_checked": [], "qc_calls": [], "llm_calls": 0, "searched": False,
+    out = QC_AGENT.invoke({**payload, "notes": list(payload.get("notes") or []), "pages_checked": [],
+                              "qc_calls": list(payload.get("qc_calls") or []), "llm_calls": 0, "searched": False,
                               "reasked": False})
     return {"qc_results": [out["result"]], "llm_calls": out.get("llm_calls", 0)}
+
+
+# -----------------------------
+# PAGE CHECK: one checker call per page for every field whose quote is on that page
+# -----------------------------
+QC_PAGE_SYSTEM = QC_SYSTEM.split("Return JSON:")[0].replace(
+    "checking one extracted field against the source pages.",
+    "checking several extracted fields against the same source pages. Judge each field on its own, "
+    "as if it were the only one.") + """There may be no page image: then judge from the page text, where table rows are listed line by line.
+Return JSON: {"fields": [{"name": str, "verdict": "correct"|"incorrect"|"not_found", "correct_value": str|null,
+"evidence_quote": str|null, "evidence_page": int|null, "reasoning": str}]}, one entry per field, in the order given."""
+PAGE_GROUP_MAX = 12  # fields per page check
+
+
+def qc_page(payload: dict) -> dict:
+    """Confirms the easy fields cheaply. Only "correct" with a proof Python finds on the page is final;
+    every other field goes on to the full per-field check (page image, search, re-ask)."""
+    idx = _INDEXES[payload["doc_id"]]
+    page, items = payload["page"], payload["items"]
+    path = Path(payload["file_path"])
+    # The page text is enough when the PDF has a text layer; a scanned page also gets its image
+    images = page_images(path, [page]) if page in payload.get("ocr_pages", []) else []
+    brief = [{"name": it["spec"]["name"], "description": it["spec"].get("description") or "-",
+              "type": it["spec"].get("type"), "extracted_value": (it["extracted"] or {}).get("value")} for it in items]
+    user = (f"Fields to check:\n{json.dumps(brief, indent=2, ensure_ascii=False)}\n\n"
+            f"Source page:\n{pages_block(idx, [page])}")
+    if images:
+        user += f"\n\nAn image of page {page} follows."
+    try:
+        out = llm_json(payload["qc_model"], QC_PAGE_SYSTEM, user, images,
+                       step=f"QC check: page {page} ({len(items)} field{'s' if len(items) > 1 else ''})")
+    except Exception as e:  # the full checks still run
+        logger.warning("Page check failed: %s", e)
+        out = {}
+    answers = {}
+    for a in out.get("fields") or []:
+        if isinstance(a, dict) and a.get("name"):
+            answers[a["name"]] = clean_verdict(a)
+    content = [{"type": "text", "text": user}] + [
+        {"type": "image_url", "image_url": {"url": f"<page {page} as PNG, {QC_IMAGE_DPI} dpi>", "detail": "high"}}
+        for _ in images]
+    call = {"model": payload["qc_model"], "temperature": 0, "response_format": {"type": "json_object"},
+            "messages": [{"role": "system", "content": QC_PAGE_SYSTEM},
+                         {"role": "user", "content": content if images else user}],
+            "response": {"fields": list(answers.values())}}
+
+    results, pending = [], []
+    for it in items:
+        spec, ex = it["spec"], it["extracted"] or {}
+        verdict = answers.get(spec["name"]) or {}
+        evidence_page = None
+        if verdict.get("evidence_quote"):
+            evidence_page, _ = idx.find_quote(verdict["evidence_quote"], [page])
+        state = {"spec": spec, "extracted": ex, "verdict": verdict, "evidence_ok": evidence_page is not None,
+                 "evidence_page": evidence_page, "notes": list(it["locate"].get("notes") or []),
+                 "pages_checked": [page], "located_by": it["locate"].get("located_by", "citation"),
+                 "citation_ok": it["locate"].get("citation_ok"), "qc_calls": [call]}
+        result = qc_finalize(state)["result"] if verdict else None
+        if result and result["status"] == PASS:
+            result["notes"].append(f"Confirmed in one check of page {page} together with the other fields on it.")
+            results.append(result)
+        else:
+            pending.append({"doc_id": payload["doc_id"], "file_path": payload["file_path"], "spec": spec,
+                            "qc_model": payload["qc_model"], "extracted": ex, "qc_calls": [call],
+                            "notes": [f"The check of page {page} didn't confirm this field, so it was checked on its own "
+                                      "with the page image."]})
+    return {"qc_results": results, "qc_pending": pending, "llm_calls": 1}
+
+
+ABSENT_MAX_PAGES = 4  # pages read when confirming that empty fields really aren't in the document
+
+
+def qc_absent(payload: dict) -> dict:
+    """Fields the extractor left empty: search for each (an embedding and the local reranker, nearly
+    free), then one text-only check of those pages for all of them. A field confirmed absent and not
+    required is final; one the checker finds, or a required one, gets the full per-field check."""
+    idx = _INDEXES[payload["doc_id"]]
+    items = payload["items"]
+    ranked: Dict[int, float] = {}
+    for it in items:
+        spec = it["spec"]
+        query = f"{spec['name'].replace('_', ' ')} {spec.get('description', '')}".strip()
+        for rank, hit in enumerate(idx.search(query, k=QC_SEARCH_PAGES, step=f"QC search: {spec['name']}")):
+            ranked[hit["page"]] = min(ranked.get(hit["page"], 99), rank)
+    pages = sorted(ranked, key=lambda p: (ranked[p], p))[:ABSENT_MAX_PAGES]
+    if not pages:
+        return {"qc_pending": items}
+    brief = [{"name": it["spec"]["name"], "description": it["spec"].get("description") or "-",
+              "type": it["spec"].get("type"), "extracted_value": None} for it in items]
+    user = (f"The extractor found nothing for these fields. Check whether the pages contain them.\n\n"
+            f"Fields to check:\n{json.dumps(brief, indent=2, ensure_ascii=False)}\n\n"
+            f"Source pages:\n{pages_block(idx, pages)}")
+    try:
+        out = llm_json(payload["qc_model"], QC_PAGE_SYSTEM, user,
+                       step=f"QC check: confirm {len(items)} empty field{'s' if len(items) > 1 else ''} absent")
+    except Exception as e:
+        logger.warning("Absence check failed: %s", e)
+        out = {}
+    answers = {a["name"]: clean_verdict(a) for a in out.get("fields") or [] if isinstance(a, dict) and a.get("name")}
+    call = {"model": payload["qc_model"], "temperature": 0, "response_format": {"type": "json_object"},
+            "messages": [{"role": "system", "content": QC_PAGE_SYSTEM}, {"role": "user", "content": user}],
+            "response": {"fields": list(answers.values())}}
+    results, pending = [], []
+    for it in items:
+        spec, ex = it["spec"], it["extracted"] or {}
+        verdict = answers.get(spec["name"]) or {}
+        # "incorrect" with no value on an empty field is read as not found (see qc_finalize)
+        absent = verdict.get("verdict") == "not_found" or (
+            verdict.get("verdict") == "incorrect" and is_empty(verdict.get("correct_value")))
+        if absent:
+            # Not required: confirmed absent. Required: it's missing, which needs a person either way,
+            # so it goes to Needs review without another, costlier check
+            notes = ["Nothing was extracted; searched the document to confirm the field is absent.",
+                     f"Checked together with the other empty fields on pages {', '.join(map(str, pages))}."]
+            if spec.get("required"):
+                notes.append("This field is required and wasn't found, so it needs your decision.")
+            state = {"spec": spec, "extracted": ex, "verdict": {**verdict, "verdict": "not_found"}, "evidence_ok": False,
+                     "evidence_page": None, "pages_checked": pages, "located_by": "search", "qc_calls": [call], "notes": notes}
+            results.append(qc_finalize(state)["result"])
+        else:
+            pending.append({**it, "qc_calls": [call],
+                            "notes": [f"The check of pages {', '.join(map(str, pages))} for empty fields "
+                                      "found something or the field is required, so it was checked on its own."]})
+    return {"qc_results": results, "qc_pending": pending, "llm_calls": 1}
+
+
+def qc_direct(payload: dict) -> dict:
+    """Fields Python couldn't place on a page (no value, or a quote not in the document) skip the page check."""
+    return {"qc_pending": payload["items"]}
+
+
+def followup_sends(state: PipelineState):
+    pending = state.get("qc_pending") or []
+    return [Send("qc_field", p) for p in pending] or "rules"
 
 
 # -----------------------------
@@ -728,13 +865,35 @@ def report(state: PipelineState) -> dict:
 # PIPELINE GRAPH
 # -----------------------------
 def qc_sends(state: PipelineState):
+    """Python locates every field's quote first. Fields on the same page are checked together;
+    fields it can't place go straight to the full per-field check."""
     if not state.get("run_qc", True):
         return "rules"
     wanted = state.get("qc_fields") or [f["name"] for f in state["fields"]]
-    sends = [Send("qc_field", {"doc_id": state["doc_id"], "file_path": state["file_path"],
-                               "spec": f, "qc_model": state["models"]["qc"],
-                               "extracted": state["extraction"].get(f["name"])})
-             for f in state["fields"] if f["name"] in wanted]
+    base = {"doc_id": state["doc_id"], "file_path": state["file_path"], "qc_model": state["models"]["qc"]}
+    by_page: Dict[int, list] = {}
+    direct, empty = [], []
+    for f in state["fields"]:
+        if f["name"] not in wanted:
+            continue
+        ex = state["extraction"].get(f["name"])
+        loc = qc_locate({"doc_id": state["doc_id"], "extracted": ex, "notes": []})
+        pages = loc.get("candidate_pages") or []
+        if len(pages) == 1:
+            by_page.setdefault(pages[0], []).append({"spec": f, "extracted": ex, "locate": loc})
+        elif is_empty((ex or {}).get("value")):
+            empty.append({**base, "spec": f, "extracted": ex})
+        else:
+            direct.append({**base, "spec": f, "extracted": ex})
+    sends = []
+    for page, items in sorted(by_page.items()):
+        for i in range(0, len(items), PAGE_GROUP_MAX):
+            sends.append(Send("qc_page", {**base, "page": page, "items": items[i:i + PAGE_GROUP_MAX],
+                                          "ocr_pages": state.get("ocr_pages", [])}))
+    if empty:
+        sends.append(Send("qc_absent", {**base, "items": empty}))
+    if direct:
+        sends.append(Send("qc_direct", {"items": direct}))
     return sends or "rules"
 
 
@@ -752,14 +911,23 @@ def build_pipeline():
     g.add_node("extract_batch", extract_batch)
     g.add_node("merge_extraction", merge_extraction)
     g.add_node("ground_extraction", ground_extraction)
+    g.add_node("qc_page", qc_page)
+    g.add_node("qc_direct", qc_direct)
+    g.add_node("qc_absent", qc_absent)
+    g.add_node("qc_followup", lambda state: {})
     g.add_node("qc_field", qc_field)
     g.add_node("rules", rules)
     g.add_node("report", report)
     g.add_edge(START, "ingest")
-    g.add_conditional_edges("ingest", route_after_ingest, ["extract_batch", "qc_field", "rules"])
+    g.add_conditional_edges("ingest", route_after_ingest, ["extract_batch", "qc_page", "qc_direct", "qc_absent", "rules"])
     g.add_edge("extract_batch", "merge_extraction")
     g.add_edge("merge_extraction", "ground_extraction")
-    g.add_conditional_edges("ground_extraction", qc_sends, ["qc_field", "rules"])
+    g.add_conditional_edges("ground_extraction", qc_sends, ["qc_page", "qc_direct", "qc_absent", "rules"])
+    # Page checks and direct fields meet here; whatever isn't confirmed gets the full per-field check
+    g.add_edge("qc_page", "qc_followup")
+    g.add_edge("qc_direct", "qc_followup")
+    g.add_edge("qc_absent", "qc_followup")
+    g.add_conditional_edges("qc_followup", followup_sends, ["qc_field", "rules"])
     g.add_edge("qc_field", "rules")
     g.add_edge("rules", "report")
     g.add_edge("report", END)
@@ -809,8 +977,8 @@ def stream_pipeline(file_path: str, schema: Any, extraction: Any = None, qc_fiel
                        "progress": 0.15 + 0.35 * done_batches / n_batches}
             elif node == "merge_extraction":
                 yield {"stage": "Verifying fields against the document", "progress": 0.5}
-            elif node == "qc_field":
-                done_fields += 1
+            elif node in ("qc_field", "qc_page", "qc_absent"):
+                done_fields += 1 if node == "qc_field" else len(out.get("qc_results") or [])
                 yield {"stage": f"Verifying fields ({done_fields}/{n_fields})",
                        "progress": 0.5 + 0.45 * done_fields / max(n_fields, 1)}
             elif node == "rules":

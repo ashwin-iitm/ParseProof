@@ -465,10 +465,15 @@ footer { color: var(--ink-3); font-size: 14px; }
 
     <div class="step qc">
       <div class="step-body">
-        <div class="step-head"><h3>One QC check per field</h3><span class="who py">Python</span><span class="who qc">gpt-4.1-mini</span><span class="who lo">reranker</span></div>
+        <div class="step-head"><h3>QC checks, page by page</h3><span class="who py">Python</span><span class="who qc">gpt-4.1-mini</span><span class="who lo">reranker</span></div>
         <p class="kid">A second teacher, who did not write the answers, opens the book on the page the student named.</p>
-        <p>All 14 fields are checked at the same time, with up to 8 AI calls running at once. Each check is: Python locates the quote, gpt-4.1-mini judges the value on those pages, Python checks gpt-4.1-mini's proof, and, at most once, searches for better pages and asks again. <a href="#qc">The next section</a> shows it as a diagram and follows three fields.</p>
-        <p class="sends"><b>Sent to OpenAI:</b> per field, the text and pictures of 1 to 4 pages to gpt-4.1-mini, and, only if a search runs, the search question to the embedding model.</p>
+        <p>Python first finds each field's quote. Then there are three kinds of check, all running at the same time (up to 8 AI calls at once):</p>
+        <ul class="plain">
+          <li><b>Page check:</b> all fields whose quote is on the same page are checked together, in one call with that page's text. 10 fields on page 2 cost one call, not ten.</li>
+          <li><b>Absence check:</b> fields the extractor left empty are searched for, then confirmed absent together in one text-only call.</li>
+          <li><b>Full check:</b> any field those checks didn't confirm (a disagreement, a proof Python couldn't find, something found in an empty field) gets its own check with page pictures, a search and one re-ask. <a href="#qc">The next section</a> shows it as a diagram.</li>
+        </ul>
+        <p class="sends"><b>Sent to OpenAI:</b> to gpt-4.1-mini, the text of each page that holds fields (and a picture if it's a scan), the text of the pages searched for empty fields, and for full checks the text and up to 2 pictures of the pages read; to the embedding model, each search question.</p>
       </div>
     </div>
 
@@ -506,6 +511,7 @@ footer { color: var(--ink-3); font-size: 14px; }
 
 <section id="qc">
   <h2>Inside one QC check</h2>
+  <p class="prose">Most fields are settled by the cheap <b>page check</b>: one call per page, text only, for every field whose quote Python found on that page. A field counts as settled there only when the checker says “correct” and Python finds its proof on the page. Empty fields go to the <b>absence check</b>: a search for each, then one text-only call over those pages. A field confirmed absent is settled; a required one that's missing goes to Needs review. Everything else gets the <b>full check</b> below.</p>
   <figure>
     <div class="svgwrap">
       <svg viewBox="0 0 900 520" role="img" aria-label="QC check for one field. Step 1, Python locate: is the quote on the cited page? If yes, go to step 2. If the quote is nowhere or nothing was extracted, search the index for the best pages, then go to step 2. Step 2, gpt-4.1-mini verify reads only those pages. Step 3, Python checks the checker's proof is on the page. If the verdict is wrong or not found, or the proof is fake, search once more and verify again. Step 4 decides Verified, Mismatch or Needs review. If search finds no page at all, the field goes to Needs review with no AI call.">
@@ -752,22 +758,23 @@ Source pages:
   <p class="prose muted">OpenAI's standard prices from <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; you can edit them in the app under Settings → Model prices.</p>
 
   <h3>What real runs cost</h3>
-  <p class="prose">Measured from the token counts the app records, multiplied by the prices above. Both documents were run with each checker:</p>
+  <p class="prose">Measured from the token counts the app records, with gpt-4.1-mini checking page by page:</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Document</th><th>Checker</th><th>gpt-4.1 · extract</th><th>Checker · QC</th><th>Total</th><th>Result</th></tr></thead>
+      <thead><tr><th>Document</th><th>Fields</th><th>Extraction</th><th>QC</th><th>QC as % of extraction</th><th>Result</th></tr></thead>
       <tbody>
-        <tr class="win"><td>2-page scanned invoice, 11 fields</td><td><code>gpt-4.1-mini</code></td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 33,837 tokens · $0.015</td><td class="num"><b>$0.024</b></td><td>10 verified, wrong GSTIN caught</td></tr>
-        <tr><td>2-page scanned invoice, 11 fields</td><td><code>gpt-4o</code></td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 23,148 tokens · $0.064</td><td class="num"><b>$0.074</b></td><td>The same</td></tr>
-        <tr class="win"><td>4-page bank statement, 13 fields</td><td><code>gpt-4.1-mini</code></td><td class="num">2 calls · 15,218 tokens · $0.035</td><td class="num">13 calls · 84,628 tokens · $0.035</td><td class="num"><b>$0.070</b></td><td>10 verified, 3 to review</td></tr>
-        <tr><td>4-page bank statement, 13 fields</td><td><code>gpt-4o</code></td><td class="num">2 calls · 15,196 tokens · $0.035</td><td class="num">13 calls · 65,780 tokens · $0.171</td><td class="num"><b>$0.206</b></td><td>11 verified, 2 to review</td></tr>
+        <tr><td>9 synthetic loss run analyses (7 pages each)</td><td class="num">23 each</td><td class="num">$0.234 in all</td><td class="num">$0.056 in all</td><td class="num"><b>24%</b> on average, 41% at most</td><td>207 of 207 verified; 45 of 45 answer-key values right</td></tr>
+        <tr><td>4-page bank statement</td><td class="num">13</td><td class="num">$0.035</td><td class="num">$0.011</td><td class="num"><b>32%</b></td><td>10 verified, 3 to review (2 required fields the statement doesn't print, and a bank name shown only in the logo)</td></tr>
+        <tr><td>2-page scanned invoice</td><td class="num">11</td><td class="num">$0.0095</td><td class="num">$0.0031</td><td class="num"><b>33%</b></td><td>10 verified, wrong GSTIN caught</td></tr>
+        <tr><td>2-page digital invoice</td><td class="num">11</td><td class="num">$0.0055</td><td class="num">$0.0020</td><td class="num"><b>37%</b></td><td>11 verified</td></tr>
+        <tr><td>Service agreement</td><td class="num">10</td><td class="num">$0.0153</td><td class="num">$0.0032</td><td class="num"><b>21%</b></td><td>10 verified</td></tr>
       </tbody>
     </table>
   </div>
   <div class="callout key">
-    <h3>gpt-4.1-mini cuts the checking cost to about a fifth</h3>
-    <p>It counts page pictures as more tokens (30–50% more here), but each token is six times cheaper, so the QC part fell from $0.064 to $0.015 and from $0.171 to $0.035. With gpt-4.1-mini the checker is about half of the bill and extraction the other half; with gpt-4o the checker was about 85%.</p>
-    <p>The one difference in results: on the bank statement, the bank name is printed only in the logo, which has no text. gpt-4o called it correct from a transaction line containing “KKBK”, which is weak proof. gpt-4.1-mini said it couldn't find it, so the field went to Needs review. That is the safer answer, but it is one more field for you to look at.</p>
+    <h3>Checking page by page cut the QC cost by about 85%</h3>
+    <p>Before, every field got its own call with the page's text and picture, so a page with 10 fields was sent 10 times. On the 9 loss runs, QC cost 155% of extraction. Now one call checks every field on a page, text only, and only unconfirmed fields get a full check with pictures: QC is 24% of extraction, with the same results. A document with a real error costs a little more, because that field gets the full check.</p>
+    <p>Choosing the checker model matters too: with gpt-4o instead of gpt-4.1-mini, the checker's token price is about six times higher.</p>
   </div>
 
   <h3>A rough estimate for the 60-page policy, with gpt-4.1-mini checking</h3>
@@ -776,9 +783,9 @@ Source pages:
       <thead><tr><th>Part</th><th>How it's worked out</th><th>Estimate</th></tr></thead>
       <tbody>
         <tr><td>Extraction</td><td class="num">60 pages × $0.005–0.009 per page</td><td class="num">$0.30–0.54</td></tr>
-        <tr><td>QC</td><td class="num">14 fields × $0.0013–0.0027, plus a few second checks</td><td class="num">$0.02–0.05</td></tr>
+        <tr><td>QC</td><td class="num">one page check per page with fields, plus a few full checks</td><td class="num">about $0.01–0.03</td></tr>
         <tr><td>OCR (1 page) and embeddings (60 pages)</td><td class="num">gpt-4.1-mini and text-embedding-3-small</td><td class="num">under $0.01</td></tr>
-        <tr><td><b>One run</b></td><td></td><td class="num"><b>about $0.30–0.60</b></td></tr>
+        <tr><td><b>One run</b></td><td></td><td class="num"><b>about $0.30–0.60</b>, mostly extraction</td></tr>
       </tbody>
     </table>
   </div>
@@ -787,7 +794,7 @@ Source pages:
   <h3>If cost matters</h3>
   <ul class="plain">
     <li><b>The checker is already the cheap model.</b> For the strongest check, set the QC model to <code>gpt-4o</code> under Settings, at about five times the QC cost. Most of the bill is now extraction, which grows with page count.</li>
-    <li><b>Fewer fields:</b> each field is one check.</li>
+    <li><b>Fewer fields:</b> fields on the same page share one check, so fewer fields mostly saves extraction output and full checks.</li>
     <li><b>Fewer pages:</b> if you only need the first 10 pages of a 200-page contract, upload those.</li>
   </ul>
 </section>
@@ -838,7 +845,7 @@ Source pages:
         <tr><td>Most other words allowed between quote words</td><td class="num">8</td><td>Words-in-order check</td></tr>
         <tr><td>Fewest words for words-in-order and same-words</td><td class="num">4</td><td>Python checks</td></tr>
         <tr><td>Page pictures per QC call</td><td class="num">up to 4, at 110 dpi</td><td>QC</td></tr>
-        <tr><td>Checker calls per field</td><td class="num">usually 1, at most 3</td><td>One re-ask if its proof isn't on the page, one more check after a search</td></tr>
+        <tr><td>Checker calls</td><td class="num">one per page with fields, one for all empty fields, then up to 3 per unconfirmed field</td><td>One re-ask if its proof isn't on the page, one more check after a search</td></tr>
         <tr><td>Sum rule tolerance</td><td class="num">as set in the template (₹1 for insurance)</td><td>Rule checks</td></tr>
         <tr class="group"><td colspan="3">Speed</td></tr>
         <tr><td>AI calls at the same time, inside one document</td><td class="num">8</td><td>OCR, extraction pieces, QC checks</td></tr>

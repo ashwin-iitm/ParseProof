@@ -135,6 +135,8 @@ upload ─> ingest ──> extract (OpenAI, PDF page ranges in parallel) ──>
                                                     ──> rule checks (required, number/date, sums) ──> review
 ```
 
+QC runs page by page. Python first finds every field's quote; all fields on the same page are then checked together in one text-only call, and fields the extractor left empty are confirmed absent together in one more. A field is settled there only when the checker says correct and Python finds its proof on the page; anything else gets a full check of its own (page pictures, a search, one re-ask). On the test loss runs this made QC about a quarter of the extraction cost, with the same results.
+
 Before QC, the extractor checks its own work. If a field's quote isn't found anywhere in the
 document text, the extractor re-reads that page's text once. The new answer is used only if its
 quote is on the page, and the field's notes say so. After QC, a "correction" that has the same words
@@ -206,7 +208,7 @@ Change models in the app under **Settings**, or in `.env`. Other limits are in `
 
 OpenAI standard prices per 1M tokens (input / output), from [OpenAI's pricing page](https://developers.openai.com/api/docs/pricing) on 3 Nov 2026: `gpt-4.1` $2.00 / $8.00, `gpt-4o` $2.50 / $10.00, `gpt-4.1-mini` $0.40 / $1.60, `text-embedding-3-small` $0.02. The reranker runs locally and is free.
 
-Measured runs with the default `gpt-4.1-mini` checker: a 2-page scanned invoice with 11 fields cost **$0.024**, a 4-page bank statement with 13 fields cost **$0.070**. With `gpt-4o` as the checker the same runs cost $0.074 and $0.206, because the checker sends page text and pictures once per field. The app shows each run's tokens and estimated cost in the run header and in the Runs list. **Run report** on the run page lists every model call, including embeddings, OCR and the local reranker, with its tokens, time and cost, plus time per phase, and exports it as CSV or JSON, and the Excel export has a `Cost (USD)` column on the `Runs` sheet. Edit the prices under **Settings → Model prices**: change a price, add a model (it then appears in the model pickers above), or reset to OpenAI's prices. Costs everywhere use the list, older runs included. The starting list is `DEFAULT_PRICES` in `config.py`. A model with no price is left out of the total. The [explainer](docs/parseproof-explained.html) has the full breakdown.
+Measured runs with the default `gpt-4.1-mini` checker, checking page by page: QC cost 24% of extraction on average on 9 seven-page loss runs (41% at most), 32% on a 4-page bank statement, and 21–37% on the sample invoices and agreement. The app shows each run's tokens and estimated cost in the run header and in the Runs list. **Run report** on the run page lists every model call, including embeddings, OCR and the local reranker, with its tokens, time and cost, plus time per phase, and exports it as CSV or JSON, and the Excel export has a `Cost (USD)` column on the `Runs` sheet. Edit the prices under **Settings → Model prices**: change a price, add a model (it then appears in the model pickers above), or reset to OpenAI's prices. Costs everywhere use the list, older runs included. The starting list is `DEFAULT_PRICES` in `config.py`. A model with no price is left out of the total. The [explainer](docs/parseproof-explained.html) has the full breakdown.
 
 ## Limits
 
