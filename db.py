@@ -256,7 +256,7 @@ def get_runs(run_ids: List[str]) -> List[Dict[str, Any]]:
             rows = c.execute(f"""
                 SELECT r.id, r.document_id, r.template_id, r.template_name, r.template, r.status, r.stage,
                        r.progress, r.error, json_remove(r.report, '$.page_texts') AS report, r.review,
-                       r.created_at, r.finished_at, r.approved_at, r.batch_id, d.filename, d.pages, d.content_type
+                       r.created_at, r.finished_at, r.approved_at, r.batch_id, d.filename, d.pages, d.content_type, d.path
                 FROM runs r JOIN documents d ON d.id = r.document_id
                 WHERE r.id IN ({", ".join("?" for _ in chunk)})""", chunk).fetchall()
             found.update({r["id"]: _row(r) for r in rows})

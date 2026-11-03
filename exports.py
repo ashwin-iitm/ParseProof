@@ -7,7 +7,8 @@ Two shapes, both used by server.py:
   QC detail   one row per field per document, with the extracted value, the verified value,
               the evidence page and quote, and what the reviewer decided
 
-The Excel workbook holds both plus a QC status grid, a run log and a key to the colours.
+The Excel workbook holds both plus an evidence sheet (a picture of the page each value came from,
+with the quote highlighted), a QC status grid, a run log and a key to the colours.
 """
 
 import csv
@@ -20,10 +21,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from openpyxl import Workbook
 from openpyxl.comments import Comment
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.drawing.spreadsheet_drawing import AnchorMarker, TwoCellAnchor
+from openpyxl.worksheet.hyperlink import Hyperlink
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from config import usage_cost
+from evidence_pictures import Pictures
 
 STATUS_LABEL = {"PASS": "Verified", "FAIL": "Mismatch", "REVIEW": "Needs review", "ABSENT": "Not in document",
                 "NOT_CHECKED": "Not checked"}
@@ -39,6 +44,10 @@ FILL = {
     "muted": PatternFill("solid", fgColor="F1F3F5"),
 }
 HEADER_FONT = Font(bold=True, color="FFFFFF")
+LINK_FONT = Font(color="0563C1", underline="single")
+PICTURE_WIDTH = 720  # px the page band is shown at in the Evidence sheet
+PICTURE_MAX_HEIGHT = 520  # px; Excel rows stop at 409 pt
+EMU = 9525  # drawing units per pixel
 # An amount with at most a currency symbol or code around it: "$12,400.00", "INR 5,00,000", "(1,234)", "-7.5 USD"
 CURRENCY = r"(?:[A-Z]{3}|Rs\.?|[^\w\s.,()-])?"
 NUMBER = re.compile(rf"^\s*\(?-?\s*{CURRENCY}\s*-?\d[\d,]*(\.\d+)?\s*{CURRENCY}\s*\)?\s*$")
@@ -260,11 +269,73 @@ def _cell_note(r: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _link(cell, sheet: str, row: int) -> None:
+    cell.hyperlink = Hyperlink(ref=cell.coordinate, location=f"'{sheet}'!A{row}", display=str(cell.value or ""))
+
+
+def _evidence_sheet(wb: Workbook, per_run, keys: bool) -> Dict[Tuple[str, str], int]:
+    """One row per value that has a source page: the quote, and a picture of that part of the page.
+    Returns the row for each (run id, field) so the other sheets can link to it."""
+    ws = wb.create_sheet("Evidence", 1)
+    _header(ws, ["document", "field", "value", "status", "page", "quote", "picture"] if keys else
+            ["Document", "Field", "Value", "QC status", "Page", "Quote", "Where it is on the page"])
+    _widths(ws, {1: 28, 2: 20, 3: 20, 4: 13, 5: 6, 6: 36, 7: PICTURE_WIDTH / 7 + 2})
+    rows_for: Dict[Tuple[str, str], int] = {}
+    for run, rows in per_run:
+        if run["status"] != "done":
+            continue
+        path = run.get("path") or ""
+        pics = None
+        if path.lower().endswith(".pdf"):
+            try:
+                pics = Pictures(path)
+            except Exception:
+                pics = None
+        try:
+            for r in rows:
+                if not r["page"]:
+                    continue
+                ws.append([run["filename"], r["label"], typed(r["value"], r["type"]),
+                           STATUS_LABEL.get(r["status"], r["status"]), r["page"], r["evidence"]])
+                row = ws.max_row
+                rows_for[(run["id"], r["field"])] = row
+                fill = FILL["resolved"] if r["reviewed"] else FILL.get(r["status"])
+                if fill:
+                    ws.cell(row, 4).fill = fill
+                for c in range(1, 7):
+                    ws.cell(row, c).alignment = Alignment(wrap_text=True, vertical="top")
+                shot = pics.picture(r["page"], r["evidence"], r["value"], r["label"]) if pics else None
+                if not shot:
+                    ws.cell(row, 7, "No picture: the source is not a PDF." if not pics else "Page not found.")
+                    continue
+                png, w, h, found = shot
+                scale = min(1.0, (PICTURE_WIDTH if found else 360) / w, PICTURE_MAX_HEIGHT / h)
+                img = XLImage(io.BytesIO(png))
+                img.width, img.height = round(w * scale), round(h * scale)
+                # Held inside its own cell, so filtering hides it and sorting moves it with its row
+                img.anchor = TwoCellAnchor(editAs="twoCell",
+                                           _from=AnchorMarker(col=6, row=row - 1, colOff=4 * EMU, rowOff=4 * EMU),
+                                           to=AnchorMarker(col=6, row=row - 1, colOff=(img.width + 4) * EMU,
+                                                           rowOff=(img.height + 4) * EMU))
+                ws.add_image(img)
+                ws.row_dimensions[row].height = max(30, img.height * 0.75 + 8)
+                if not found:
+                    note = "(The quote isn't in the page's text, for example a scanned page, so the whole page is shown.)"
+                    ws.cell(row, 6).value = f"{r['evidence']}\n\n{note}" if r["evidence"] else note
+        finally:
+            if pics:
+                pics.doc.close()
+    ws.freeze_panes = "B2"
+    ws.auto_filter.ref = f"A1:F{max(ws.max_row, 1)}"
+    return rows_for
+
+
 def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
     wb = Workbook()
     cols = columns_for(runs)
     n_doc = len(DOC_COLUMNS)
     per_run = [(run, field_rows(run)) for run in runs]
+    evidence_row = _evidence_sheet(wb, per_run, keys)
 
     # Data: one row per document, cells coloured by QC result
     data = wb.active
@@ -288,6 +359,8 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
             fill = FILL["resolved"] if r["reviewed"] else FILL.get(r["status"]) if r["open"] else None
             if fill:
                 cell.fill = fill
+            if (run["id"], k) in evidence_row:
+                _link(cell, "Evidence", evidence_row[(run["id"], k)])
             note = _cell_note(r)
             if note:
                 cell.comment = Comment(note[:1500], "ParseProof", width=320, height=140)
@@ -319,7 +392,7 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
 
     # QC detail: one row per field per document
     detail = wb.create_sheet("QC detail")
-    _header(detail, [k if keys else h for k, h in DETAIL_HEADERS])
+    _header(detail, [k if keys else h for k, h in DETAIL_HEADERS] + ["picture" if keys else "Picture"])
     status_col = [k for k, _ in DETAIL_HEADERS].index("status") + 1
     for run, rows in per_run:
         if run["status"] != "done":
@@ -331,8 +404,12 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
             fill = FILL["resolved"] if r["reviewed"] else FILL.get(r["status"])
             if fill:
                 detail.cell(detail.max_row, status_col).fill = fill
+            if (run["id"], r["field"]) in evidence_row:
+                cell = detail.cell(detail.max_row, len(DETAIL_HEADERS) + 1, f"View page {r['page']}")
+                _link(cell, "Evidence", evidence_row[(run["id"], r["field"])])
+                cell.font = LINK_FONT
     _widths(detail, {1: 30, 2: 18, 3: 20, 4: 22, 5: 22, 6: 16, 7: 13, 8: 11, 9: 22, 10: 9, 11: 44, 12: 11,
-                     13: 22, 14: 9, 15: 44, 16: 12, 17: 12, 18: 40, 19: 44, 20: 10})
+                     13: 22, 14: 9, 15: 44, 16: 12, 17: 12, 18: 40, 19: 44, 20: 10, 21: 13})
     for row in detail.iter_rows(min_row=2):
         for c in (11, 15, 18, 19):
             row[c - 1].alignment = Alignment(wrap_text=True, vertical="top")
@@ -375,9 +452,13 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
             key.cell(key.max_row, 1).fill = fill
     key.append([])
     for label, text in [
-        ("Data", "One row per document, one column per field. Numbers are stored as numbers so totals work."),
+        ("Data", "One row per document, one column per field. Numbers are stored as numbers so totals work. "
+                 "Click a value to see where it is in the document."),
+        ("Evidence", "Every value with its source page, the quote, and a picture of that part of the page with the "
+                     "quote highlighted in yellow. A scanned page is shown whole."),
         ("QC status", "The same grid with the QC result for every value."),
-        ("QC detail", "One row per field per document: extracted value, QC value, evidence page and quote, notes."),
+        ("QC detail", "One row per field per document: extracted value, QC value, evidence page and quote, notes, "
+                      "and a link to the picture."),
         ("Runs", "Processing details per document: time, model calls, tokens used, estimated OpenAI cost in US dollars, pages checked, errors."),
     ]:
         key.append([label, text])

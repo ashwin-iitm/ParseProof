@@ -512,7 +512,7 @@ footer { color: var(--ink-3); font-size: 14px; }
       <div class="step-body">
         <div class="step-head"><h3>You review, approve and export</h3><span class="who hu">You</span></div>
         <p class="kid">The head teacher looks only at the answers marked red or amber.</p>
-        <p>The review screen shows each field in three labelled steps: what the extractor read (with Python's quote check), what the QC checker said (with Python's proof check and the QC request JSON button), and the final value with where it came from. The PDF page is shown with the proof highlighted. You accept QC's value, keep the extracted one or type your own, then approve and export to Excel, CSV or JSON.</p>
+        <p>The review screen shows each field in three labelled steps: what the extractor read (with Python's quote check), what the QC checker said (with Python's proof check and the QC request JSON button), and the final value with where it came from. The PDF page is shown with the proof highlighted. You accept QC's value, keep the extracted one or type your own, then approve and export to Excel, CSV or JSON. In Excel, click any value to jump to the Evidence sheet: a picture of that part of the PDF page, the quote in light yellow and the value boxed in orange, so a table value shows its row and column headers.</p>
         <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
       </div>
     </div>
@@ -1002,7 +1002,8 @@ Source pages:
         <tr><td><span class="t mono">text_processing.py</span></td><td class="num">60</td><td>Reads text from PDF, Word, Excel, CSV and text files, one string per page.</td></tr>
         <tr><td><span class="t mono">config.py</span></td><td class="num">185</td><td>Models, limits and the key from .env; the call meter; the price list.</td></tr>
         <tr><td><span class="t mono">db.py</span></td><td class="num">332</td><td>The SQLite tables and queries.</td></tr>
-        <tr><td><span class="t mono">exports.py</span></td><td class="num">395</td><td>Excel, CSV and JSON exports.</td></tr>
+        <tr><td><span class="t mono">exports.py</span></td><td class="num">476</td><td>Excel, CSV and JSON exports.</td></tr>
+        <tr><td><span class="t mono">evidence_pictures.py</span></td><td class="num">174</td><td>The Excel Evidence sheet's pictures: finds each quote on its PDF page with PyMuPDF, boxes the value and renders that band of the page.</td></tr>
         <tr><td><span class="t mono">web/src/</span></td><td class="num"></td><td>The React screens. pages/: Runs, NewRun, RunReview, Templates, TemplateEditor, Batches, BatchDetail, Settings. components/: DocumentViewer (react-pdf), RunReportDialog, QcCallDialog, TokenUsage. api.ts: every server call and its types.</td></tr>
       </tbody>
     </table>
@@ -1592,7 +1593,7 @@ cost = (m["input"] * price["input"] + m["output"] * price["output"]) / 1e6   <sp
         <tr><td><span class="t">FastAPI + uvicorn</span></td><td>The server on port 8010 that the screens talk to</td></tr>
         <tr><td><span class="t">SQLite</span></td><td>One database file, <code>data/parseproof.db</code>: documents, templates, runs, batches, decisions, settings</td></tr>
         <tr><td><span class="t">python-dotenv</span></td><td>Reads the OpenAI key and settings from <code>.env</code></td></tr>
-        <tr><td><span class="t">openpyxl</span></td><td>Builds the Excel export with coloured cells and proof comments</td></tr>
+        <tr><td><span class="t">openpyxl</span></td><td>Builds the Excel export with coloured cells, proof comments and the Evidence sheet pictures (rendered by PyMuPDF, shrunk by Pillow)</td></tr>
         <tr><td><span class="t">React, TypeScript, Vite, Tailwind CSS</span></td><td>The screens, and the tool that builds them</td></tr>
         <tr><td><span class="t">react-pdf (pdf.js)</span></td><td>Shows the PDF in the review screen and highlights the proof</td></tr>
         <tr><td><span class="t">TanStack Query</span></td><td>Fetches data from the server and keeps the progress bar moving</td></tr>

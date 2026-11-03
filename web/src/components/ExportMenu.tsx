@@ -5,7 +5,7 @@ import { api, type ExportOptions } from "@/api";
 import { Button, Checkbox } from "@/components/ui";
 
 const CHOICES: { label: string; hint: string; options: ExportOptions }[] = [
-  { label: "Excel workbook", hint: "Data table, QC status grid, QC detail and run log", options: { format: "xlsx" } },
+  { label: "Excel workbook", hint: "Data table, a picture of where each value is in the document, QC status, QC detail and run log", options: { format: "xlsx" } },
   { label: "CSV · data table", hint: "One row per document, one column per field", options: { format: "csv", layout: "summary" } },
   { label: "CSV · data table with QC", hint: "Adds a QC status column after every field", options: { format: "csv", layout: "summary_qc" } },
   { label: "CSV · QC detail", hint: "One row per field: values, pages, evidence, notes", options: { format: "csv", layout: "detail" } },
