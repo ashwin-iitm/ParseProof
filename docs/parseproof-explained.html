@@ -209,18 +209,22 @@ footer { color: var(--ink-3); font-size: 14px; }
 
 <section id="models">
   <h2>Every model we use</h2>
-  <p class="prose">ParseProof uses six models: five during a run, and one more only when you ask AI to draft a template.</p>
+  <p class="prose">ParseProof uses four models. gpt-4.1 and gpt-4.1-mini each do more than one job.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:22%">Model</th><th style="width:14%">Runs on</th><th>Job</th><th style="width:30%">When it is called</th></tr></thead>
+      <thead><tr><th style="width:24%">Model</th><th style="width:13%">Runs on</th><th>Its jobs, and when each one runs</th></tr></thead>
       <tbody>
-        <tr><td><span class="t">text-embedding-3-small</span><span class="where">embedding model</span></td><td>OpenAI</td><td>Turns text into 1,536 numbers that describe its meaning. It doesn't write or decide anything.</td><td>Once per page the first time a file is run (all pages), and once per search question during QC</td></tr>
-        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">OCR</span></td><td>OpenAI</td><td>Types out the words on a scanned page</td><td>Only for PDF pages with almost no text (fewer than 25 characters)</td></tr>
-        <tr><td><span class="t">gpt-4.1</span><span class="where">extractor</span></td><td>OpenAI</td><td>Reads the document and answers every field with value, page, quote and confidence</td><td>Once per 40 PDF pages, all at the same time</td></tr>
-        <tr><td><span class="t">gpt-4.1</span><span class="where">self-check</span></td><td>OpenAI</td><td>Re-reads a page when its first quote isn't in the document</td><td>Rarely; one call for all such fields</td></tr>
-        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">QC checker (default)</span></td><td>OpenAI</td><td>Judges whether a value is right, using only 1 to 4 pages</td><td>Once per field, twice if it has to search</td></tr>
-        <tr><td><span class="t">ms-marco-MiniLM-L-6-v2</span><span class="where">reranker</span></td><td>Your computer</td><td>Scores how well a page answers a search question</td><td>During a QC search, for up to 10 pages. Free.</td></tr>
-        <tr><td><span class="t">gpt-4.1</span><span class="where">template drafting</span></td><td>OpenAI</td><td>Designs a template from your description and a sample document</td><td>Only when you click Create with AI. Not part of a run.</td></tr>
+        <tr><td><span class="t">gpt-4.1</span><span class="where">$2.00 in · $8.00 out per 1M tokens</span></td><td>OpenAI</td><td><ul class="plain">
+          <li><b>Extractor:</b> reads the PDF file and answers every field with value, page, quote and confidence. One call per 40 PDF pages, all at the same time.</li>
+          <li><b>Self-check:</b> re-reads a value whose quote isn't on any page. Rare; one call for all such fields.</li>
+          <li><b>Template drafting:</b> designs a template from your description and a sample document. Only when you click Create with AI, never during a run.</li></ul></td></tr>
+        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">$0.40 in · $1.60 out per 1M tokens</span></td><td>OpenAI</td><td><ul class="plain">
+          <li><b>QC checker:</b> judges whether each value is right, from the page text (plus a page picture for scans). One call per page that has fields, one call for all empty fields, then up to 3 calls for each field those didn't confirm.</li>
+          <li><b>OCR:</b> types out the words on a scanned page. Only for PDF pages with fewer than 25 characters of text.</li></ul></td></tr>
+        <tr><td><span class="t">text-embedding-3-small</span><span class="where">$0.02 per 1M tokens</span></td><td>OpenAI</td><td><ul class="plain">
+          <li><b>Embeddings:</b> turns text into 1,536 numbers that describe its meaning; it doesn't write or decide anything. Every page once, the first time a file is run (8 pages per call), then one small call per search question during QC.</li></ul></td></tr>
+        <tr><td><span class="t">ms-marco-MiniLM-L-6-v2</span><span class="where">free</span></td><td>Your computer</td><td><ul class="plain">
+          <li><b>Reranker:</b> scores how well a page answers a search question, for up to 10 pages per search. Only during QC searches.</li></ul></td></tr>
       </tbody>
     </table>
   </div>
