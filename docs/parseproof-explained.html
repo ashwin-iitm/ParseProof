@@ -129,6 +129,11 @@ svg .n-hu { fill: var(--hu-bg); stroke: var(--hu); stroke-width: 1.4; }
 svg .n-doc { fill: var(--surface); stroke: var(--ink-3); stroke-width: 1.4; }
 svg .ah { fill: var(--ink-3); } svg .ah.loop { fill: var(--qc); } svg .ah.idx { fill: var(--py); } svg .ah.exe { fill: var(--ex); }
 
+.fname { font: 600 12.5px/1.4 var(--f-mono); color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.fname b { color: var(--ink); }
+.codeblock { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+pre .s { color: var(--hu); }
+
 hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
 footer { color: var(--ink-3); font-size: 14px; }
 
@@ -169,6 +174,7 @@ footer { color: var(--ink-3); font-size: 14px; }
     <li><a href="#data">What is sent to OpenAI</a></li>
     <li><a href="#cost">What it costs</a></li>
     <li><a href="#agents">Is this an AI agent?</a></li>
+    <li><a href="#code">The code, step by step</a></li>
     <li><a href="#numbers">Every number and limit</a></li>
     <li><a href="#tech">Every technology</a></li>
     <li><a href="#faq">More questions people ask</a></li>
@@ -816,6 +822,706 @@ Source pages:
   <p class="prose"><b>LangGraph</b>, the library that runs it, is often used to build agents; here it wires a fixed workflow with branches and parallel steps. That choice keeps cost predictable (at most two checker calls per field), makes every field auditable (same steps every time, all shown on screen), and keeps runs repeatable. A one-line description: <em>ParseProof is an AI workflow built with LangGraph: one AI extracts, a second AI checks each field on its source page, and Python verifies both of them.</em></p>
 </section>
 
+<section id="code">
+  <h2>The code, step by step</h2>
+  <p class="prose">This is the same journey as above, in the code. Every excerpt is copied from the files in the repository; lines marked <code># ...</code> were left out to keep it short. Read the pictures first, then the steps.</p>
+
+  <h3>What happens when you press Run</h3>
+
+<figure>
+  <div class="svgwrap">
+    <svg viewBox="0 0 920 236" role="img" aria-label="Request flow. The browser posts to the FastAPI server. The server submits the run to a thread pool and returns. The worker runs PIPELINE.stream and writes every progress event to SQLite with db.update_run. The browser asks for the run every 1.2 seconds until it is done.">
+      <defs>
+        <marker id="k2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker>
+      </defs>
+      <rect x="20" y="30" width="170" height="74" rx="8" class="n-hu"/>
+      <text x="105" y="60" text-anchor="middle" class="lbl">Browser (React)</text>
+      <text x="105" y="80" text-anchor="middle" class="sub">RunReview.tsx</text>
+
+      <rect x="240" y="30" width="190" height="74" rx="8" class="n-py"/>
+      <text x="335" y="60" text-anchor="middle" class="lbl">FastAPI · server.py</text>
+      <text x="335" y="80" text-anchor="middle" class="sub">POST /api/runs → start_run()</text>
+
+      <rect x="480" y="30" width="180" height="74" rx="8" class="n-py"/>
+      <text x="570" y="60" text-anchor="middle" class="lbl">Thread pool</text>
+      <text x="570" y="80" text-anchor="middle" class="sub">execute_run(run_id)</text>
+
+      <rect x="710" y="30" width="190" height="74" rx="8" class="n-py"/>
+      <text x="805" y="60" text-anchor="middle" class="lbl">PIPELINE.stream()</text>
+      <text x="805" y="80" text-anchor="middle" class="sub">agents.py, the graph above</text>
+
+      <rect x="480" y="156" width="180" height="62" rx="8" class="n-doc"/>
+      <text x="570" y="182" text-anchor="middle" class="lbl">SQLite</text>
+      <text x="570" y="200" text-anchor="middle" class="sub">data/parseproof.db · runs</text>
+
+      <line x1="190" y1="67" x2="236" y2="67" class="edge" marker-end="url(#k2)"/>
+      <text x="213" y="56" text-anchor="middle" class="elbl">Run</text>
+      <line x1="430" y1="67" x2="476" y2="67" class="edge" marker-end="url(#k2)"/>
+      <text x="453" y="56" text-anchor="middle" class="elbl">submit</text>
+      <line x1="660" y1="67" x2="706" y2="67" class="edge" marker-end="url(#k2)"/>
+      <text x="683" y="56" text-anchor="middle" class="elbl">loop</text>
+      <polyline points="805,104 805,187 664,187" class="edge" marker-end="url(#k2)"/>
+      <text x="815" y="150" class="elbl">db.update_run()</text>
+      <text x="815" y="166" class="elbl">every event</text>
+      <polyline points="476,187 105,187 105,108" class="edge" marker-end="url(#k2)"/>
+      <text x="118" y="150" class="elbl">GET /api/runs/{id} every 1.2 s</text>
+      <text x="118" y="166" class="elbl">until done (via FastAPI)</text>
+    </svg>
+  </div>
+  <figcaption>What happens when you press Run. The server answers at once; the work happens in a background thread, and the browser follows the progress by asking for the run every 1.2 seconds.</figcaption>
+</figure>
+
+  <h3>The code map: the pipeline graph</h3>
+
+<figure>
+  <div class="svgwrap">
+    <svg viewBox="0 0 920 990" role="img" aria-label="Code map of the LangGraph pipeline in agents.py. ingest reads pages, runs OCR and builds the FAISS and BM25 index. It sends one extract_batch per 40-page range to gpt-4.1, in parallel. merge_extraction keeps the most confident value. ground_extraction re-reads values whose quote is on no page. qc_sends routes each field: quote on one page to qc_page, empty to qc_absent, unplaced to qc_direct. They meet at qc_followup, which sends each unconfirmed field to qc_field, a small agent. Then rules, then report.">
+      <defs>
+        <marker id="k1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker>
+        <marker id="k1x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah exe"/></marker>
+        <marker id="k1q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah loop"/></marker>
+      </defs>
+
+      <!-- 1 ingest -->
+      <rect x="300" y="20" width="320" height="64" rx="8" class="n-py"/>
+      <text x="460" y="46" text-anchor="middle" class="lbl">ingest</text>
+      <text x="460" y="66" text-anchor="middle" class="sub">page text · OCR · embeddings · FAISS + BM25</text>
+      <text x="640" y="46" class="sub">agents.py · load_index()</text>
+      <text x="640" y="62" class="sub">doc_index.py · vector_store.py</text>
+      <line x1="460" y1="84" x2="460" y2="120" class="edge exe" marker-end="url(#k1x)"/>
+      <text x="472" y="107" class="elbl ex">Send() per 40-page range, in parallel</text>
+
+      <!-- 2 extract_batch -->
+      <rect x="312" y="136" width="320" height="64" rx="8" class="n-ex" opacity="0.45"/>
+      <rect x="306" y="130" width="320" height="64" rx="8" class="n-ex" opacity="0.7"/>
+      <rect x="300" y="124" width="320" height="64" rx="8" class="n-ex"/>
+      <text x="460" y="150" text-anchor="middle" class="lbl">extract_batch × N</text>
+      <text x="460" y="170" text-anchor="middle" class="sub">gpt-4.1 reads the PDF piece · strict JSON</text>
+      <text x="646" y="150" class="sub">openai_extract.py</text>
+      <text x="646" y="166" class="sub">extract_pdf_range()</text>
+      <line x1="460" y1="200" x2="460" y2="224" class="edge" marker-end="url(#k1)"/>
+      <text x="472" y="216" class="elbl">answers added together (operator.add)</text>
+
+      <!-- 3 merge -->
+      <rect x="300" y="228" width="320" height="64" rx="8" class="n-py"/>
+      <text x="460" y="254" text-anchor="middle" class="lbl">merge_extraction</text>
+      <text x="460" y="274" text-anchor="middle" class="sub">most confident non-empty value per field</text>
+      <text x="640" y="262" class="sub">agents.py:327</text>
+      <line x1="460" y1="292" x2="460" y2="328" class="edge" marker-end="url(#k1)"/>
+
+      <!-- 4 ground -->
+      <rect x="300" y="332" width="320" height="64" rx="8" class="n-ex"/>
+      <text x="460" y="358" text-anchor="middle" class="lbl">ground_extraction</text>
+      <text x="460" y="378" text-anchor="middle" class="sub">self-check, only if a quote is on no page</text>
+      <text x="640" y="366" class="sub">agents.py:350</text>
+
+      <!-- fan-out bus -->
+      <line x1="460" y1="396" x2="460" y2="424" class="edge"/>
+      <text x="472" y="414" class="elbl">qc_sends(): Python places every quote first</text>
+      <line x1="170" y1="424" x2="750" y2="424" class="edge"/>
+      <line x1="170" y1="424" x2="170" y2="462" class="edge loop" marker-end="url(#k1q)"/>
+      <line x1="460" y1="424" x2="460" y2="462" class="edge loop" marker-end="url(#k1q)"/>
+      <line x1="750" y1="424" x2="750" y2="462" class="edge" marker-end="url(#k1)"/>
+      <text x="178" y="446" class="elbl loop">quote on 1 page</text>
+      <text x="468" y="446" class="elbl loop">value empty</text>
+      <text x="758" y="446" class="elbl">can't be placed</text>
+
+      <!-- 5 three QC entry nodes -->
+      <rect x="52" y="478" width="260" height="64" rx="8" class="n-qc" opacity="0.5"/>
+      <rect x="40" y="466" width="260" height="64" rx="8" class="n-qc"/>
+      <text x="170" y="492" text-anchor="middle" class="lbl">qc_page × pages</text>
+      <text x="170" y="512" text-anchor="middle" class="sub">1 call per page, up to 12 fields</text>
+      <rect x="330" y="466" width="260" height="64" rx="8" class="n-qc"/>
+      <text x="460" y="492" text-anchor="middle" class="lbl">qc_absent</text>
+      <text x="460" y="512" text-anchor="middle" class="sub">search, then 1 call for all empty fields</text>
+      <rect x="620" y="466" width="260" height="64" rx="8" class="n-py"/>
+      <text x="750" y="492" text-anchor="middle" class="lbl">qc_direct</text>
+      <text x="750" y="512" text-anchor="middle" class="sub">no call: passes them straight on</text>
+
+      <!-- join bus -->
+      <line x1="170" y1="542" x2="170" y2="560" class="edge"/>
+      <line x1="460" y1="530" x2="460" y2="586" class="edge" marker-end="url(#k1)"/>
+      <line x1="750" y1="530" x2="750" y2="560" class="edge"/>
+      <line x1="170" y1="560" x2="750" y2="560" class="edge"/>
+      <text x="178" y="578" class="elbl">Verified → done · the rest → qc_pending</text>
+
+      <!-- 6 followup -->
+      <rect x="300" y="590" width="320" height="64" rx="8" class="n-py"/>
+      <text x="460" y="616" text-anchor="middle" class="lbl">qc_followup</text>
+      <text x="460" y="636" text-anchor="middle" class="sub">join point: which fields are still unconfirmed?</text>
+      <text x="640" y="624" class="sub">agents.py · followup_sends()</text>
+      <line x1="460" y1="654" x2="460" y2="690" class="edge loop" marker-end="url(#k1q)"/>
+      <text x="472" y="677" class="elbl loop">Send() per pending field, in parallel</text>
+
+      <!-- 7 qc_field -->
+      <rect x="312" y="706" width="320" height="64" rx="8" class="n-qc" opacity="0.45"/>
+      <rect x="306" y="700" width="320" height="64" rx="8" class="n-qc" opacity="0.7"/>
+      <rect x="300" y="694" width="320" height="64" rx="8" class="n-qc"/>
+      <text x="460" y="720" text-anchor="middle" class="lbl">qc_field × fields</text>
+      <text x="460" y="740" text-anchor="middle" class="sub">locate → verify → search (once) → finalize</text>
+      <text x="646" y="720" class="sub">agents.py · build_qc_agent()</text>
+      <text x="646" y="736" class="sub">its own small LangGraph</text>
+      <line x1="460" y1="770" x2="460" y2="794" class="edge" marker-end="url(#k1)"/>
+      <text x="472" y="786" class="elbl">one result per field</text>
+
+      <!-- bypass: nothing pending -->
+      <polyline points="300,622 24,622 24,830 296,830" class="edge" marker-end="url(#k1)"/>
+      <text x="34" y="726" class="elbl">nothing pending</text>
+
+      <!-- 8 rules -->
+      <rect x="300" y="798" width="320" height="64" rx="8" class="n-py"/>
+      <text x="460" y="824" text-anchor="middle" class="lbl">rules</text>
+      <text x="460" y="844" text-anchor="middle" class="sub">required · number · date · sum rules</text>
+      <text x="640" y="832" class="sub">agents.py:781</text>
+      <line x1="460" y1="862" x2="460" y2="898" class="edge" marker-end="url(#k1)"/>
+
+      <!-- 9 report -->
+      <rect x="300" y="902" width="320" height="64" rx="8" class="n-py"/>
+      <text x="460" y="928" text-anchor="middle" class="lbl">report</text>
+      <text x="460" y="948" text-anchor="middle" class="sub">summary, proof pages, page text → SQLite</text>
+      <text x="640" y="936" class="sub">agents.py:823</text>
+    </svg>
+  </div>
+  <figcaption>The code map: every box is a node in <code>agents.py</code>, named as in the code. Colour shows who does the work, as everywhere on this page. Stacked boxes run many times at once. Purple arrows lead to the checker. If you supply the values yourself, <code>ingest</code> goes straight to <code>qc_sends</code> and the blue boxes are skipped.</figcaption>
+</figure>
+
+  <h3>Which file does what</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th style="width:22%">File</th><th style="width:9%">Lines</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="t mono">server.py</span></td><td class="num">689</td><td>The FastAPI app: upload, templates, runs, batches, exports, settings. Starts each run in a background thread.</td></tr>
+        <tr><td><span class="t mono">agents.py</span></td><td class="num">1,017</td><td>The whole pipeline as a LangGraph graph: ingest, extraction, self-check, every QC step, the Python checks, rules and the report.</td></tr>
+        <tr><td><span class="t mono">openai_extract.py</span></td><td class="num">240</td><td>The calls to gpt-4.1 for extraction and template drafting, and OCR for scans.</td></tr>
+        <tr><td><span class="t mono">doc_index.py</span></td><td class="num">192</td><td>The page index: FAISS + BM25 search, RRF, the reranker and Python&#x27;s quote matching.</td></tr>
+        <tr><td><span class="t mono">vector_store.py</span></td><td class="num">58</td><td>Embeddings (8 pages per call), the FAISS index, and loading the reranker.</td></tr>
+        <tr><td><span class="t mono">text_processing.py</span></td><td class="num">60</td><td>Reads text from PDF, Word, Excel, CSV and text files, one string per page.</td></tr>
+        <tr><td><span class="t mono">config.py</span></td><td class="num">185</td><td>Models, limits and the key from .env; the call meter; the price list.</td></tr>
+        <tr><td><span class="t mono">db.py</span></td><td class="num">332</td><td>The SQLite tables and queries.</td></tr>
+        <tr><td><span class="t mono">exports.py</span></td><td class="num">395</td><td>Excel, CSV and JSON exports.</td></tr>
+        <tr><td><span class="t mono">web/src/</span></td><td class="num"></td><td>The React screens. pages/: Runs, NewRun, RunReview, Templates, TemplateEditor, Batches, BatchDetail, Settings. components/: DocumentViewer (react-pdf), RunReportDialog, QcCallDialog, TokenUsage. api.ts: every server call and its types.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Every step, with its code</h3>
+  <div class="steps">
+    <div class="step hu">
+      <div class="step-body">
+        <div class="step-head"><h3>You upload the file</h3><span class="who py">Python</span></div>
+        <p>The browser sends the file to the server. The server saves it under a new id, refuses types it can't read, files over 100 MB and locked PDFs, and records it in SQLite. Nothing goes to OpenAI yet.</p>
+        <div class="codeblock"><div class="fname"><b>server.py</b><span>upload_document()</span></div><pre>@app.post("/api/documents")
+def upload_document(file: UploadFile = File(...)):
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_TYPES:                      <span class="c"># .pdf .docx .xlsx .xls .csv .txt</span>
+        raise HTTPException(400, f"Unsupported file type '{ext or 'none'}'. Use PDF, Word, Excel, CSV or text.")
+    doc_id = db.new_id()
+    path = DOCUMENT_DIR / f"{doc_id}{ext}"            <span class="c"># data/documents/&lt;id&gt;.pdf</span>
+    with open(path, "wb") as out:
+        shutil.copyfileobj(file.file, out)
+    <span class="c"># ... size check (MAX_UPLOAD_MB), then for PDFs:</span>
+    with fitz.open(path) as pdf:                      <span class="c"># PyMuPDF</span>
+        locked = pdf.needs_pass and not pdf.authenticate("")
+        pages = pdf.page_count
+    <span class="c"># ... a locked PDF is deleted and refused</span>
+    doc = db.add_document(id=doc_id, filename=file.filename, path=str(path), size=size, pages=pages,
+                          sha=file_hash(path), content_type=...)
+    return doc</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Starting a run: it runs in the background</h3><span class="who py">Python</span><span class="who hu">Browser</span></div>
+        <p>When you press Run, the server creates the run row and hands the work to a thread pool, so the request returns at once. The worker runs the pipeline and writes every progress event to SQLite. The run page asks the server for the run every 1.2 seconds while it is queued or running, which is what moves the progress bar.</p>
+        <div class="codeblock"><div class="fname"><b>server.py</b><span>start_run() and execute_run()</span></div><pre>jobs = ThreadPoolExecutor(max_workers=RUN_CONCURRENCY, thread_name_prefix="run")
+
+def start_run(document_id, template_id, batch_id=None, template=None):
+    <span class="c"># ... checks: the OpenAI key is set, the document and the template exist</span>
+    run = db.add_run(document_id, tpl, batch_id)
+    jobs.submit(execute_run, run["id"])               <span class="c"># runs in a background thread</span>
+    return run                                        <span class="c"># the browser gets the run id straight away</span>
+
+def execute_run(run_id):
+    run = db.get_run(run_id)
+    doc = db.get_document(run["document_id"])
+    db.update_run(run_id, status="running", stage="Reading document", progress=0.02)
+    for event in stream_pipeline(doc["path"], run["template"], models=current_models()):
+        if "report" in event:
+            db.update_run(run_id, status="done", stage="Complete", progress=1, report=event["report"], ...)
+        else:
+            db.update_run(run_id, stage=event["stage"], progress=round(event["progress"], 3))</pre></div>
+<div class="codeblock"><div class="fname"><b>web/src/pages/RunReview.tsx</b><span>TanStack Query polling</span></div><pre>const query = useQuery({
+  queryKey: ["run", id],
+  queryFn: () =&gt; api.run(id),                        <span class="c">// GET /api/runs/{id}</span>
+  refetchInterval: (q) =&gt; (q.state.data &amp;&amp; ["queued", "running"].includes(q.state.data.status) ? 1200 : false),
+});</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>The pipeline is a LangGraph graph</h3><span class="who py">Python</span></div>
+        <p>Every box in the code map above is one <code>add_node</code> line. A plain edge always goes to the next node. A conditional edge calls a Python function that decides where to go; when it returns a list of <code>Send(...)</code>, LangGraph runs that node once per item, in parallel (8 at a time), and adds up their outputs.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>build_pipeline()</span></div><pre>def build_pipeline():
+    g = StateGraph(PipelineState)
+    g.add_node("ingest", ingest)
+    g.add_node("extract_batch", extract_batch)
+    g.add_node("merge_extraction", merge_extraction)
+    g.add_node("ground_extraction", ground_extraction)
+    g.add_node("qc_page", qc_page)
+    g.add_node("qc_direct", qc_direct)
+    g.add_node("qc_absent", qc_absent)
+    g.add_node("qc_followup", lambda state: {})
+    g.add_node("qc_field", qc_field)
+    g.add_node("rules", rules)
+    g.add_node("report", report)
+    g.add_edge(START, "ingest")
+    g.add_conditional_edges("ingest", route_after_ingest, ["extract_batch", "qc_page", "qc_direct", "qc_absent", "rules"])
+    g.add_edge("extract_batch", "merge_extraction")
+    g.add_edge("merge_extraction", "ground_extraction")
+    g.add_conditional_edges("ground_extraction", qc_sends, ["qc_page", "qc_direct", "qc_absent", "rules"])
+    <span class="c"># Page checks and direct fields meet here; whatever isn't confirmed gets the full per-field check</span>
+    g.add_edge("qc_page", "qc_followup")
+    g.add_edge("qc_direct", "qc_followup")
+    g.add_edge("qc_absent", "qc_followup")
+    g.add_conditional_edges("qc_followup", followup_sends, ["qc_field", "rules"])
+    g.add_edge("qc_field", "rules")
+    g.add_edge("rules", "report")
+    g.add_edge("report", END)
+    return g.compile()</pre></div>
+<p>The state that flows between the nodes is a typed dictionary. Lists marked <code>operator.add</code> are added together when parallel nodes return at the same time, so 14 parallel QC checks each return one result and the state ends up with all 14.</p>
+<div class="codeblock"><div class="fname"><b>agents.py</b><span>PipelineState (shortened)</span></div><pre>class PipelineState(TypedDict, total=False):
+    file_path: str
+    fields: List[dict]                                    <span class="c"># the template's fields</span>
+    rules: List[dict]                                     <span class="c"># the template's sum rules</span>
+    models: Dict[str, str]                                <span class="c"># {"extract": "gpt-4.1", "qc": "gpt-4.1-mini", "ocr": ...}</span>
+    extraction: Dict[str, dict]                           <span class="c"># field -&gt; {value, page, quote, confidence}</span>
+    doc_id: str                                           <span class="c"># the file's fingerprint</span>
+    extraction_candidates: Annotated[List[dict], operator.add]
+    qc_results: Annotated[List[dict], operator.add]
+    qc_pending: Annotated[List[dict], operator.add]       <span class="c"># fields that still need the full check</span>
+    llm_calls: Annotated[int, operator.add]
+    final_results: List[dict]
+    report: dict</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Read the text of every page, and OCR the scans</h3><span class="who py">Python</span><span class="who ex">gpt-4.1-mini, scans only</span></div>
+        <p>The file's fingerprint (SHA-256) names its index folder. If that folder exists, the saved index is loaded and none of this step runs again. Otherwise PyMuPDF reads each page's text in blocks, sorted top to bottom and left to right so each column's lines stay together. A PDF page with fewer than 25 characters is a scan: its picture goes to gpt-4.1-mini, which types out the text.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>load_index()</span></div><pre>doc_id = file_hash(path)                              <span class="c"># first 16 hex characters of the file's SHA-256</span>
+folder = INDEX_DIR / f"{doc_id}_v{INDEX_VERSION}"     <span class="c"># data/indexes/&lt;doc_id&gt;_v3</span>
+if PageIndex.exists(folder):                          <span class="c"># same file seen before: no embedding calls</span>
+    _INDEXES[doc_id] = PageIndex.load(folder)
+    return doc_id, _INDEXES[doc_id], [], True
+
+pages = extract_text_from_file(path)                  <span class="c"># one string per page</span>
+ocr_pages = [i for i, t in enumerate(pages, 1) if len(t.strip()) &lt; OCR_MIN_CHARS]   <span class="c"># 25</span>
+<span class="c"># ... each scanned page goes to ocr_page(), 8 at a time, and its text replaces the empty page</span>
+index = PageIndex(pages)                              <span class="c"># embeddings + FAISS + BM25 (next step)</span>
+index.save(folder)</pre></div>
+<div class="codeblock"><div class="fname"><b>text_processing.py</b><span>extract_text_from_file(), PDF part</span></div><pre>doc = fitz.open(file_path)
+for p in doc:
+    <span class="c"># Text blocks top-to-bottom, left-to-right: keeps each column's lines together</span>
+    blocks = sorted((b for b in p.get_text("blocks") if b[6] == 0), key=lambda b: (round(b[1]), b[0]))
+    pages.append("\n".join(b[4].strip("\n") for b in blocks))</pre></div>
+<div class="codeblock"><div class="fname"><b>openai_extract.py</b><span>ocr_page()</span></div><pre>png = doc[page_no - 1].get_pixmap(dpi=150).tobytes("png")        <span class="c"># page picture</span>
+resp = client.responses.create(
+    model=model,                                                  <span class="c"># gpt-4.1-mini</span>
+    input=[{"role": "user", "content": [
+        {"type": "input_image", "image_url": f"data:image/png;base64,{base64.b64encode(png).decode()}"},
+        {"type": "input_text", "text": "Transcribe all text on this page exactly, preserving line breaks "
+                                       "and reading order. Output only the text."},
+    ]}],
+    temperature=0,
+)
+return resp.output_text</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Build the page index: embeddings, FAISS and BM25</h3><span class="who py">Python</span><span class="who ex">text-embedding-3-small</span></div>
+        <p>Each page is one search unit, so every answer can point at an exact page. The first 24,000 characters of every page go to OpenAI's embedding model, 8 pages per call; each page comes back as 1,536 numbers that capture its meaning. FAISS stores those numbers. BM25 stores word counts for keyword search. Both are built once per file and saved.</p>
+        <div class="codeblock"><div class="fname"><b>doc_index.py</b><span>PageIndex</span></div><pre>class PageIndex:
+    def __init__(self, pages):
+        self.pages = [p or "" for p in pages]
+        texts = [p[:EMBED_CHARS] if p.strip() else "[empty page]" for p in self.pages]   <span class="c"># 24,000 chars</span>
+        self.faiss = build_faiss_index(create_embeddings(texts))
+        self._prepare()
+
+    def _prepare(self):
+        self._norm = [normalize(p) for p in self.pages]                  <span class="c"># lower case, single spaces</span>
+        self.bm25 = BM25Okapi([tokenize(p) or ["_"] for p in self.pages])  <span class="c"># words per page</span>
+
+    def save(self, folder):                                              <span class="c"># pages.json + pages.faiss</span>
+        (folder / "pages.json").write_text(json.dumps(self.pages), encoding="utf-8")
+        faiss.write_index(self.faiss, str(folder / "pages.faiss"))</pre></div>
+<div class="codeblock"><div class="fname"><b>vector_store.py</b><span>create_embeddings() and build_faiss_index()</span></div><pre>def create_embeddings(text_chunks, batch_size=8):
+    for i in range(0, len(text_chunks), batch_size):
+        batch = text_chunks[i:i + batch_size]
+        resp = client.embeddings.create(model=EMBED_MODEL, input=batch)  <span class="c"># text-embedding-3-small</span>
+        for itm in resp.data:
+            embeddings.append(np.array(itm.embedding, dtype=np.float32))  <span class="c"># 1,536 numbers per page</span>
+    return np.vstack(embeddings)
+
+def build_faiss_index(emb):
+    faiss.normalize_L2(emb)            <span class="c"># length 1, so inner product = cosine similarity</span>
+    idx = faiss.IndexFlatIP(DIMS)      <span class="c"># exact search over every page, no approximation</span>
+    idx.add(emb)
+    return idx</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Split a big PDF and fan out</h3><span class="who py">Python</span></div>
+        <p>A PDF goes to the extractor in pieces of up to 40 pages; a 60-page policy becomes pages 1–40 and 41–60. Word, Excel and CSV files are sent as text, up to 40,000 characters per call. Each piece becomes a <code>Send</code>, so the pieces are extracted at the same time. If you supplied an extraction yourself, this step is skipped and QC starts straight away.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>plan_extraction() and route_after_ingest()</span></div><pre>def plan_extraction(path, idx):
+    n = len(idx)
+    if path.suffix.lower() == ".pdf":
+        return [list(range(s, min(s + EXTRACT_PAGES_PER_CALL, n + 1)))     <span class="c"># 40 pages per call</span>
+                for s in range(1, n + 1, EXTRACT_PAGES_PER_CALL)]
+    <span class="c"># ... other formats: batches of page text up to EXTRACT_BATCH_CHARS (40,000)</span>
+
+def route_after_ingest(state):
+    if state.get("extraction"):                       <span class="c"># values supplied from outside: only check them</span>
+        return qc_sends(state)
+    return [Send("extract_batch", {"doc_id": state["doc_id"], "file_path": state["file_path"],
+                                   "fields": state["fields"], "pages": pages, "model": state["models"]["extract"]})
+            for pages in state["extract_jobs"]]</pre></div>
+      </div>
+    </div>
+    <div class="step ex">
+      <div class="step-body">
+        <div class="step-head"><h3>The extractor reads the PDF file and answers in strict JSON</h3><span class="who ex">gpt-4.1</span></div>
+        <p>PyMuPDF cuts the page range into a new small PDF, which is sent as a file. gpt-4.1 therefore sees both the text and the look of every page, not Python's text. A strict JSON schema forces one entry per field with exactly value, page, quote and confidence; <code>name</code> can only be one of your template's field names.</p>
+        <div class="codeblock"><div class="fname"><b>openai_extract.py</b><span>extract_pdf_range() and _respond()</span></div><pre>with fitz.open(path) as src, fitz.open() as part:
+    part.insert_pdf(src, from_page=first - 1, to_page=last - 1)          <span class="c"># pages first..last only</span>
+    data = base64.b64encode(part.tobytes(garbage=3, deflate=True)).decode()
+content = [
+    {"type": "input_file", "filename": f"{path.stem}_p{first}-{last}.pdf",
+     "file_data": f"data:application/pdf;base64,{data}"},
+    {"type": "input_text", "text": f"{where}\n\nFields to extract:\n{_fields_brief(fields)}"},
+]
+resp = client.responses.create(
+    model=model,                                      <span class="c"># gpt-4.1</span>
+    instructions=EXTRACT_SYSTEM,                      <span class="c"># "Use ONLY what is written ... VERBATIM quote ..."</span>
+    input=[{"role": "user", "content": content}],
+    text={"format": {"type": "json_schema", "name": "extraction",
+                     "schema": extraction_schema([f["name"] for f in fields]), "strict": True}},
+    timeout=240,
+    temperature=0,
+)
+return json.loads(resp.output_text).get("fields", [])</pre></div>
+<div class="codeblock"><div class="fname"><b>openai_extract.py</b><span>extraction_schema(), one field entry</span></div><pre>"required": ["name", "value", "page", "quote", "confidence"],
+"properties": {
+    "name": {"type": "string", "enum": field_names},  <span class="c"># only your template's fields</span>
+    "value": {"type": ["string", "null"]},
+    "page": {"type": ["integer", "null"]},
+    "quote": {"type": ["string", "null"]},
+    "confidence": {"type": "number"},
+},</pre></div>
+<div class="codeblock"><div class="fname"><b>What comes back</b><span>one entry, for the policy example</span></div><pre>{"name": "policy_number", "value": "NSI-CGL-2026-004512", "page": 2,
+ "quote": "Policy No. NSI-CGL-2026-004512", "confidence": 0.98}</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Python fixes the page numbers and merges the pieces</h3><span class="who py">Python</span></div>
+        <p>A model's page number can be off by one; its quote is the ground truth. Python looks for the quote in that piece's pages, then in the whole document, and uses the page where it really is. When two pieces both answer a field, the most confident non-empty answer wins.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>extract_batch() and merge_extraction()</span></div><pre>for item in items:
+    page = as_page(item.get("page"))
+    <span class="c"># The model's page numbers can drift; the verbatim quote is the ground truth</span>
+    if item.get("quote"):
+        found, _ = idx.find_quote(item["quote"], pages)       <span class="c"># this piece's pages first</span>
+        if found is None:
+            found, _ = idx.find_quote(item["quote"])          <span class="c"># then every page</span>
+        page = found or page
+    candidates.append({**item, "page": page if page and 1 &lt;= page &lt;= len(idx) else None})
+
+def merge_extraction(state):
+    best = {}
+    for c in state.get("extraction_candidates", []):
+        if c.get("name") not in names or is_empty(c.get("value")):
+            continue
+        cur = best.get(c["name"])
+        if cur is None or (c.get("confidence") or 0) &gt; (cur.get("confidence") or 0):
+            best[c["name"]] = c
+    return {"extraction": normalize_extraction(best, state["fields"]), "extraction_source": "openai"}</pre></div>
+      </div>
+    </div>
+    <div class="step ex">
+      <div class="step-body">
+        <div class="step-head"><h3>Self-check: re-read only a value whose quote isn&#x27;t on any page</h3><span class="who py">Python</span><span class="who ex">gpt-4.1, rare</span></div>
+        <p>If a field has a value but Python can't find its quote anywhere, the value may be misread. Those fields (and only those) go back to gpt-4.1 once, with the page text and up to 2 page pictures. The new answer is used only if Python finds its new quote on a page. Most runs make no self-check call.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>ground_extraction()</span></div><pre>loose = {name: ex for name, ex in extraction.items()
+         if not is_empty(ex.get("value")) and ex.get("quote") and ex.get("page")
+         and idx.find_quote(ex["quote"])[0] is None}          <span class="c"># quote is on no page</span>
+if not loose:
+    return {}                                                   <span class="c"># the usual case: no call</span>
+
+out = llm_json(state["models"]["extract"], GROUND_SYSTEM, user, page_images(path, pages),
+               step=f"Self-check: {', '.join(loose)}")
+for item in out.get("fields") or []:
+    found, _ = idx.find_quote(item["quote"])
+    if found is None:
+        continue                                                <span class="c"># still unproven: keep the first answer</span>
+    fixed[name] = {**old, "value": value, "quote": item["quote"], "page": found,
+                   "regrounded_from": old["value"]}             <span class="c"># shown in the field's notes</span></pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Route every field to the cheapest check that can settle it</h3><span class="who py">Python</span></div>
+        <p>Before any checker call, Python locates each field's quote. Fields whose quote is on one page are grouped by page (up to 12 per group). Empty fields go together to the absence check. A field with a value that Python can't place goes straight to the full check.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_sends()</span></div><pre>for f in state["fields"]:
+    ex = state["extraction"].get(f["name"])
+    loc = qc_locate({"doc_id": state["doc_id"], "extracted": ex, "notes": []})   <span class="c"># Python only</span>
+    pages = loc.get("candidate_pages") or []
+    if len(pages) == 1:
+        by_page.setdefault(pages[0], []).append({"spec": f, "extracted": ex, "locate": loc})
+    elif is_empty((ex or {}).get("value")):
+        empty.append({**base, "spec": f, "extracted": ex})
+    else:
+        direct.append({**base, "spec": f, "extracted": ex})
+sends = []
+for page, items in sorted(by_page.items()):
+    for i in range(0, len(items), PAGE_GROUP_MAX):                               <span class="c"># 12</span>
+        sends.append(Send("qc_page", {**base, "page": page, "items": items[i:i + PAGE_GROUP_MAX], ...}))
+if empty:
+    sends.append(Send("qc_absent", {**base, "items": empty}))
+if direct:
+    sends.append(Send("qc_direct", {"items": direct}))
+return sends or "rules"</pre></div>
+      </div>
+    </div>
+    <div class="step qc">
+      <div class="step-body">
+        <div class="step-head"><h3>Page check: one cheap call per page</h3><span class="who qc">gpt-4.1-mini</span><span class="who py">Python</span></div>
+        <p>gpt-4.1-mini gets that page's text and the list of fields with their extracted values. A scanned page also gets its picture. It answers each field with a verdict and a verbatim proof. Python then looks for each proof on the page. Only a <b>correct</b> verdict whose proof Python finds is final; anything else (incorrect, not found, proof not on the page) goes to the full check.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_page()</span></div><pre>images = page_images(path, [page]) if page in payload.get("ocr_pages", []) else []   <span class="c"># scans only</span>
+brief = [{"name": it["spec"]["name"], "description": it["spec"].get("description") or "-",
+          "type": it["spec"].get("type"), "extracted_value": (it["extracted"] or {}).get("value")} for it in items]
+user = (f"Fields to check:\n{json.dumps(brief, indent=2, ensure_ascii=False)}\n\n"
+        f"Source page:\n{pages_block(idx, [page])}")
+out = llm_json(payload["qc_model"], QC_PAGE_SYSTEM, user, images,
+               step=f"QC check: page {page} ({len(items)} fields)")
+
+for it in items:
+    verdict = answers.get(spec["name"]) or {}
+    evidence_page = None
+    if verdict.get("evidence_quote"):
+        evidence_page, _ = idx.find_quote(verdict["evidence_quote"], [page])       <span class="c"># Python checks the proof</span>
+    result = qc_finalize({..., "verdict": verdict, "evidence_ok": evidence_page is not None})["result"]
+    if result["status"] == PASS:
+        results.append(result)                                                     <span class="c"># settled</span>
+    else:
+        pending.append({...})                                                      <span class="c"># full check next</span>
+return {"qc_results": results, "qc_pending": pending, "llm_calls": 1}</pre></div>
+      </div>
+    </div>
+    <div class="step qc">
+      <div class="step-body">
+        <div class="step-head"><h3>Empty fields: search, then one call to confirm they&#x27;re absent</h3><span class="who lo">Search</span><span class="who qc">gpt-4.1-mini</span><span class="who py">Python</span></div>
+        <p>For each field the extractor left empty, the search finds its likely pages. Up to 4 of those pages go to gpt-4.1-mini in one text-only call for all the empty fields. Not found and optional: <b>Not in document</b>, done. Not found and required: <b>Needs review</b>. Found after all: the full check.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_absent()</span></div><pre>for it in items:
+    query = f"{spec['name'].replace('_', ' ')} {spec.get('description', '')}".strip()
+    for rank, hit in enumerate(idx.search(query, k=QC_SEARCH_PAGES, step=f"QC search: {spec['name']}")):
+        ranked[hit["page"]] = min(ranked.get(hit["page"], 99), rank)
+pages = sorted(ranked, key=lambda p: (ranked[p], p))[:ABSENT_MAX_PAGES]           <span class="c"># 4 pages</span>
+out = llm_json(payload["qc_model"], QC_PAGE_SYSTEM, user, step=f"QC check: confirm {len(items)} empty fields absent")
+
+absent = verdict.get("verdict") == "not_found" or (
+    verdict.get("verdict") == "incorrect" and is_empty(verdict.get("correct_value")))
+if absent:
+    results.append(qc_finalize(state)["result"])      <span class="c"># ABSENT, or REVIEW if the field is required</span>
+else:
+    pending.append({...})                             <span class="c"># the checker found it: full check</span></pre></div>
+      </div>
+    </div>
+    <div class="step qc">
+      <div class="step-body">
+        <div class="step-head"><h3>The full check: a small agent per field</h3><span class="who qc">gpt-4.1-mini</span><span class="who py">Python</span><span class="who lo">Search</span></div>
+        <p>Fields still pending each run their own small graph, in parallel: <b>locate</b> (Python finds the page), <b>verify</b> (gpt-4.1-mini with the page text and up to 2 page pictures), <b>search</b> (at most once) and <b>finalize</b>. The routing functions decide the loops.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>build_qc_agent() and its routes</span></div><pre>def route_after_locate(s):
+    return "verify" if s.get("candidate_pages") else "search"
+
+def route_after_search(s):
+    return "verify" if s.get("candidate_pages") else "finalize"
+
+def route_after_verify(s):
+    v = (s.get("verdict") or {}).get("verdict")
+    needs_more = v == "not_found" or not s.get("evidence_ok")      <span class="c"># no proof Python could confirm</span>
+    return "search" if needs_more and not s.get("searched") else "finalize"   <span class="c"># search only once</span>
+
+def build_qc_agent():
+    g = StateGraph(FieldQCState)
+    g.add_node("locate", qc_locate)
+    g.add_node("search", qc_search)
+    g.add_node("verify", qc_verify)
+    g.add_node("finalize", qc_finalize)
+    g.add_edge(START, "locate")
+    g.add_conditional_edges("locate", route_after_locate, ["verify", "search"])
+    g.add_conditional_edges("search", route_after_search, ["verify", "finalize"])
+    g.add_conditional_edges("verify", route_after_verify, ["search", "finalize"])
+    g.add_edge("finalize", END)
+    return g.compile()</pre></div>
+<p>Inside verify, Python never trusts the checker blindly. If its proof isn't on the page word for word, it is asked once more and told what was wrong. A correction is accepted only if the corrected value is written in the proof.</p>
+<div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_verify(), the proof checks</span></div><pre>def proof_on_page(verdict):
+    """Don't trust the auditor blindly either: its evidence must really be on the page."""
+    if not verdict.get("evidence_quote"):
+        return None
+    cited = as_page(verdict.get("evidence_page"))
+    p, _ = idx.find_quote(verdict["evidence_quote"], [cited] if cited in pages else pages)
+    return p
+
+verdict, call = ask(user, step)
+evidence_page = proof_on_page(verdict)
+if verdict.get("evidence_quote") and evidence_page is None and not s.get("reasked"):
+    retry_text = f"{user}\n\nYour previous answer:\n{json.dumps(verdict)}\n\n{REASK}"   <span class="c"># one re-ask</span>
+    verdict, call = ask(retry_text, step + " (re-ask: proof not on the page)")
+    evidence_page = proof_on_page(verdict)
+evidence_ok = evidence_page is not None
+if (evidence_ok and verdict.get("verdict") == "incorrect"
+        and not value_in_quote(verdict.get("correct_value"), verdict["evidence_quote"])):
+    evidence_ok = False                    <span class="c"># the correction isn't written in its own proof</span></pre></div>
+<div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_search(): the question that is searched</span></div><pre>query = f"{spec['name'].replace('_', ' ')} {spec.get('description', '')} {value}".strip()
+<span class="c"># e.g. "deductible Deductible or self-insured retention amount ₹50,000"</span>
+hits = idx.search(query, k=QC_SEARCH_PAGES + len(checked), step=f"QC search: {spec['name']}")
+new_pages = [h["page"] for h in hits if h["page"] not in checked][:QC_SEARCH_PAGES]   <span class="c"># 3 new pages</span>
+return {"candidate_pages": checked + new_pages if new_pages else [], "searched": True, "located_by": "search"}</pre></div>
+<div class="codeblock"><div class="fname"><b>agents.py</b><span>llm_json(): how every checker call is sent</span></div><pre>resp = client.chat.completions.create(
+    model=model,                                      <span class="c"># gpt-4.1-mini</span>
+    response_format={"type": "json_object"},          <span class="c"># must return JSON</span>
+    messages=[{"role": "system", "content": system}, {"role": "user", "content": content}],
+    temperature=0,
+)   <span class="c"># content = the text, then each page picture as {"type": "image_url", "url": "data:image/png;base64,..."}</span>
+record_usage(model, resp.usage, step, seconds)        <span class="c"># goes into the Run report</span>
+return json.loads(resp.choices[0].message.content)    <span class="c"># invalid JSON: asked once more, then an error</span></pre></div>
+      </div>
+    </div>
+    <div class="step lo">
+      <div class="step-body">
+        <div class="step-head"><h3>Search: FAISS + BM25, merged with RRF, then reranked</h3><span class="who ex">text-embedding-3-small</span><span class="who py">Python</span><span class="who lo">reranker</span></div>
+        <p>The question is embedded (one small call) and FAISS returns the 10 pages closest in meaning. BM25 returns the 10 pages with the best keyword score. RRF merges the two lists: a page gets 1/(60 + rank) from each list it is in. The top 10 then go to the cross-encoder on your computer, which reads the question and the page together in windows of 1,500 characters; a page's score is its best window. The best 3 pages are returned.</p>
+        <div class="codeblock"><div class="fname"><b>doc_index.py</b><span>PageIndex.search()</span></div><pre>resp = client.embeddings.create(model=EMBED_MODEL, input=[query])         <span class="c"># 1 call, the question only</span>
+q_emb = np.array(resp.data[0].embedding, dtype=np.float32).reshape(1, -1)
+faiss.normalize_L2(q_emb)
+_, I = self.faiss.search(q_emb, min(candidates, n))                        <span class="c"># 10 closest pages</span>
+vec_rank = [int(i) for i in I[0] if i &gt;= 0]
+
+bm_scores = self.bm25.get_scores(tokenize(query))
+bm_rank = [int(i) for i in np.argsort(bm_scores)[::-1][:candidates] if bm_scores[i] &gt; 0]
+
+combined = {}                                                              <span class="c"># RRF</span>
+for ranking in (vec_rank, bm_rank):
+    for rank, i in enumerate(ranking):
+        combined[i] = combined.get(i, 0) + 1 / (RRF_K + rank + 1)          <span class="c"># RRF_K = 60</span>
+top = sorted(combined, key=combined.get, reverse=True)[:candidates]
+
+stride = RERANK_WINDOW - RERANK_OVERLAP                                    <span class="c"># 1,500 - 300</span>
+for i in top:
+    text = self.pages[i] or " "
+    for start in range(0, max(len(text), 1), stride):
+        pairs.append([query, text[start:start + RERANK_WINDOW]])
+        owners.append(i)
+        if start + RERANK_WINDOW &gt;= len(text):
+            break
+scores = RERANKER.predict(pairs)          <span class="c"># cross-encoder/ms-marco-MiniLM-L-6-v2, runs locally, free</span>
+for i, s in zip(owners, scores):
+    best[i] = max(best.get(i, float("-inf")), float(s))                    <span class="c"># page = its best window</span>
+ranked = sorted(best.items(), key=lambda x: x[1], reverse=True)[:k]
+return [{"page": i + 1, "score": s} for i, s in ranked]</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>How Python decides a quote is on a page</h3><span class="who py">Python</span></div>
+        <p>Used for the extractor's quotes and the checker's proofs. Text is lower-cased and spaces are squeezed. rapidfuzz's <code>partial_ratio</code> finds the best-matching stretch of the page; 85 out of 100 or more counts. If that fails, three stricter fallbacks cover quotes that the PDF text splits up: every comma-separated piece on the page, every word in order with at most 8 words between, or every piece around a “...” in order, matched exactly.</p>
+        <div class="codeblock"><div class="fname"><b>doc_index.py</b><span>find_quote()</span></div><pre>q = normalize(quote or "")                                   <span class="c"># lower case, single spaces</span>
+candidates = [p for p in (pages or range(1, len(self.pages) + 1)) if 1 &lt;= p &lt;= len(self.pages)]
+best_page, best_score = None, 0.0
+for p in candidates:
+    score = fuzz.partial_ratio(q, self._norm[p - 1])          <span class="c"># 0-100</span>
+    if score &gt; best_score:
+        best_page, best_score = p, score
+if best_score &gt;= threshold:                                   <span class="c"># QUOTE_MATCH_THRESHOLD = 85</span>
+    return best_page, best_score
+for p in candidates:
+    page = self._norm[p - 1]
+    if segments_on_page(q, page) or words_in_order(q, page) or pieces_in_order(q, page, threshold):
+        return p, float(threshold)
+return None, best_score</pre></div>
+<div class="codeblock"><div class="fname"><b>agents.py</b><span>value_in_quote(): a correction must be written in its proof</span></div><pre>NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+def value_in_quote(value, quote):
+    wanted = numbers_in(str(value))                           <span class="c"># "₹50,000" -&gt; [50000.0]</span>
+    if wanted:
+        in_quote = set(numbers_in(quote))                     <span class="c"># whole numbers, so 0 must be a real 0</span>
+        return all(n in in_quote for n in wanted)
+    return fuzz.partial_ratio(normalize(value), normalize(quote)) &gt;= QUOTE_MATCH_THRESHOLD</pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Decide the status</h3><span class="who py">Python</span></div>
+        <p>The model gives a verdict; Python decides the status. A correction that only reformats the same value (₹4,95,600 vs 495600, or an address with its city printed twice) counts as verified, so a comma is never a mismatch.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>qc_finalize()</span></div><pre>if v == "correct" and s.get("evidence_ok"):
+    status = PASS                                   <span class="c"># Verified</span>
+elif v == "incorrect" and s.get("evidence_ok") and same_value(ex.get("value"), verdict.get("correct_value")):
+    status, v = PASS, "correct"                     <span class="c"># only formatting differs</span>
+elif (v == "incorrect" and s.get("evidence_ok") and spec.get("type", "string") == "string"
+      and same_words(ex.get("value"), verdict.get("correct_value"))):
+    status, v = PASS, "correct"                     <span class="c"># same words, repeats or order differ</span>
+elif v == "incorrect" and s.get("evidence_ok"):
+    status = FAIL                                   <span class="c"># Mismatch, with the proven correction</span>
+elif v == "not_found" and is_empty(ex.get("value")) and not spec.get("required"):
+    status = ABSENT                                 <span class="c"># Not in document</span>
+else:
+    status = REVIEW                                 <span class="c"># Needs review: no proof either way</span></pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Rule checks and the report</h3><span class="who py">Python</span></div>
+        <p>Python checks every field: required fields can't be empty, numbers must parse, dates must parse (pandas, day-first as well). Sum rules from the template, like paid + reserve = incurred, are added up. Any failure turns a Verified field into Needs review with the reason. The report lists, for each field, every page its quote is on.</p>
+        <div class="codeblock"><div class="fname"><b>agents.py</b><span>rules()</span></div><pre>r["final_value"] = r.get("correct_value") if r["status"] == FAIL else r.get("extracted_value")
+if spec.get("required") and is_empty(value):
+    flag(r, "Required field is empty.")
+elif not is_empty(value) and spec.get("type") == "number" and parse_number(value) is None:
+    flag(r, f"Value '{value}' is not a valid number.")
+elif not is_empty(value) and spec.get("type") == "date":
+    if pd.isna(pd.to_datetime(str(value), errors="coerce")) and \
+            pd.isna(pd.to_datetime(str(value), errors="coerce", dayfirst=True)):
+        flag(r, f"Value '{value}' is not a valid date.")
+
+for rule in state.get("rules", []):                   <span class="c"># {"type": "sum", "fields": [...], "equals": ..., "tolerance": ...}</span>
+    parts = [parse_number(by_name.get(f, {}).get("final_value")) for f in rule["fields"]]
+    total = parse_number(by_name.get(rule["equals"], {}).get("final_value"))
+    if abs(sum(parts) - total) &gt; rule.get("tolerance", 0.01):
+        for name in rule["fields"] + [rule["equals"]]:
+            flag(by_name[name], msg)                  <span class="c"># PASS becomes REVIEW, with the sum in the note</span></pre></div>
+      </div>
+    </div>
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>Every call is counted, and priced</h3><span class="who py">Python</span></div>
+        <p>A meter is started for each run and kept in a context variable, which LangGraph copies into its worker threads. Every OpenAI call and every reranker run adds a row: step, model, input and output tokens, seconds. Cost is worked out when you open the run, from the price list in Settings, so changing a price updates old runs too.</p>
+        <div class="codeblock"><div class="fname"><b>config.py</b><span>record_usage() and usage_cost()</span></div><pre>_METER = contextvars.ContextVar("usage_meter", default=None)
+
+def record_usage(model, usage, step="", seconds=0.0, detail=None):
+    meter = _METER.get()
+    inp = getattr(usage, "input_tokens", None)        <span class="c"># Responses API</span>
+    if inp is None:
+        inp = getattr(usage, "prompt_tokens", 0)      <span class="c"># Chat Completions and Embeddings</span>
+    <span class="c"># ... output tokens the same way</span>
+    meter.add(model, int(inp or 0), int(out or 0), seconds, step, detail)
+
+<span class="c"># usage_cost(): per call and per model</span>
+cost = (m["input"] * price["input"] + m["output"] * price["output"]) / 1e6   <span class="c"># prices are per 1M tokens</span></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="numbers">
   <h2>Every number and limit</h2>
   <div class="tablewrap">
@@ -844,7 +1550,7 @@ Source pages:
         <tr><td>Fuzzy match needed for a quote</td><td class="num">85 out of 100</td><td>All Python quote checks</td></tr>
         <tr><td>Most other words allowed between quote words</td><td class="num">8</td><td>Words-in-order check</td></tr>
         <tr><td>Fewest words for words-in-order and same-words</td><td class="num">4</td><td>Python checks</td></tr>
-        <tr><td>Page pictures per QC call</td><td class="num">up to 4, at 110 dpi</td><td>QC</td></tr>
+        <tr><td>Page pictures per QC call</td><td class="num">up to 2, at 110 dpi</td><td>QC</td></tr>
         <tr><td>Checker calls</td><td class="num">one per page with fields, one for all empty fields, then up to 3 per unconfirmed field</td><td>One re-ask if its proof isn't on the page, one more check after a search</td></tr>
         <tr><td>Sum rule tolerance</td><td class="num">as set in the template (₹1 for insurance)</td><td>Rule checks</td></tr>
         <tr class="group"><td colspan="3">Speed</td></tr>
