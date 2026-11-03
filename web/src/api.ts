@@ -38,7 +38,7 @@ export interface Template {
   run_count?: number;
 }
 
-export type TemplateDraft = Pick<Template, "name" | "description" | "fields" | "rules">;
+export type TemplateDraft = Pick<Template, "name" | "description" | "fields" | "rules"> & { warnings?: string[] };
 
 export interface Summary {
   PASS: number;

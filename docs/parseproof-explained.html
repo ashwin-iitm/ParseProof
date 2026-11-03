@@ -565,7 +565,7 @@ footer { color: var(--ink-3); font-size: 14px; }
         <text x="460" y="478" class="elbl">Needs review, no AI call</text>
       </svg>
     </div>
-    <figcaption>The purple dashed arrow is the only loop, and it runs at most once per field, so a field never costs more than two gpt-4.1-mini calls. The search box uses the embedding model for the question and the reranker on your computer.</figcaption>
+    <figcaption>The purple dashed arrow is the only search loop, and it runs at most once per field. If the checker's proof isn't on the page word for word, it is asked once more on the same pages. So a field never costs more than three checker calls, and almost always just one. The search box uses the embedding model for the question and the reranker on your computer.</figcaption>
   </figure>
 
   <h3>What gpt-4.1-mini is told and sent</h3>
@@ -633,7 +633,7 @@ Source pages:
       <tbody>
         <tr><td>Correct</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
         <tr><td>Incorrect, with a corrected value</td><td>Proof is on the page, and the corrected value is in the proof (digits must match exactly)</td><td class="fail">Mismatch</td></tr>
-        <tr><td>Incorrect, but the correction has the same words (only a repeated city or PIN dropped)</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
+        <tr><td>Incorrect, but the correction is the same value (548867 and $548,867), or has the same words (only a repeated city or PIN dropped)</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
         <tr><td>Not found, nothing was extracted, and the field isn't required</td><td>No proof needed</td><td class="pass">Verified (confirmed absent)</td></tr>
         <tr><td>Anything else: fake proof, a correction not in its own proof, a required field missing, no page found</td><td>Failed, or nothing to check</td><td class="rev">Needs review</td></tr>
       </tbody>
@@ -651,12 +651,15 @@ Source pages:
         <tr><td><span class="t">Forgiving Ctrl+F</span><span class="where">rapidfuzz partial_ratio</span></td><td>Finds the closest stretch of the page and scores the match from 0 to 100. <b>85 or more</b> counts as found, which allows odd spacing or a missing comma.</td><td>“Policy No NSI-CGL-2026-004512” matches “Policy No. NSI-CGL-2026-004512” on page 2</td></tr>
         <tr><td><span class="t">Every piece on the page</span></td><td>For a quote that spans lines the PDF stores apart: split it at commas, and accept it if every piece is on the page and together they cover almost all of the quote.</td><td>A multi-line insured address</td></tr>
         <tr><td><span class="t">Words in order</span></td><td>All the quote's words appear on the page in the same order, with at most 8 other words between any two. For blocks the PDF mixes with another column. Needs at least 4 words.</td><td>An address whose lines are mixed with “Policy period” lines from the right-hand column</td></tr>
+        <tr><td><span class="t">Shortened with “...”</span></td><td>If the checker shortens a quote with “...”, every piece must be on the page, in order, exactly. A heading glued to a value from another line does not pass.</td><td>“Coml Auto 24 8 ... $327,024 32.1%” passes; “Coml Auto ... Incurred $327,024” does not</td></tr>
       </tbody>
     </table>
   </div>
   <p class="prose">Two more checks are stricter:</p>
   <ul class="plain">
-    <li><b>Digits must match exactly.</b> When the checker suggests a corrected value, every digit in it must appear in its proof quote. ₹50,000 passes against “Deductible: ₹50,000 each claim”; ₹5,000 would not.</li>
+    <li><b>Numbers must match exactly.</b> When the checker suggests a corrected value, every number in it must appear as a whole number in its proof quote. Leading zeros and commas don't matter (03/07/2026 matches 3/7/2026), but ₹5,000 does not match “Deductible: ₹50,000 each claim”, and a guessed 0 needs a real 0 in the proof.</li>
+    <li><b>One re-ask.</b> If the checker's proof isn't on the page word for word, it is asked once more on the same pages: “copy one continuous piece of the page, a whole line or table row”. This shows in the Run report as a separate call.</li>
+    <li><b>Same value is not a mismatch.</b> If the checker calls a value “incorrect” but its correction is the same value with different formatting (548867 and $548,867), it counts as verified.</li>
     <li><b>Same words.</b> If the checker's “correct value” has exactly the same set of words as the extracted value, with at least 4 words, it is the same value and counts as verified. This applies only to text fields, never to numbers or dates.</li>
   </ul>
   <p class="prose muted">Python also uses these checks to find <b>every page a quote appears on</b>. A name printed in every page header shows as “Quote found on pages 1, 2, 3, 4” in the review screen, and each page number is a link.</p>
@@ -835,7 +838,7 @@ Source pages:
         <tr><td>Most other words allowed between quote words</td><td class="num">8</td><td>Words-in-order check</td></tr>
         <tr><td>Fewest words for words-in-order and same-words</td><td class="num">4</td><td>Python checks</td></tr>
         <tr><td>Page pictures per QC call</td><td class="num">up to 4, at 110 dpi</td><td>QC</td></tr>
-        <tr><td>Checker calls per field</td><td class="num">1, at most 2</td><td>QC</td></tr>
+        <tr><td>Checker calls per field</td><td class="num">usually 1, at most 3</td><td>One re-ask if its proof isn't on the page, one more check after a search</td></tr>
         <tr><td>Sum rule tolerance</td><td class="num">as set in the template (₹1 for insurance)</td><td>Rule checks</td></tr>
         <tr class="group"><td colspan="3">Speed</td></tr>
         <tr><td>AI calls at the same time, inside one document</td><td class="num">8</td><td>OCR, extraction pieces, QC checks</td></tr>

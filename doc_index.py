@@ -132,7 +132,8 @@ class PageIndex:
         # A quote can span lines that the page text doesn't keep together (a multi-line address
         # next to another column). Accept it when every piece is on one page.
         for p in candidates:
-            if segments_on_page(q, self._norm[p - 1]) or words_in_order(q, self._norm[p - 1]):
+            page = self._norm[p - 1]
+            if segments_on_page(q, page) or words_in_order(q, page) or pieces_in_order(q, page, threshold):
                 return p, float(threshold)
         return None, best_score
 
@@ -142,7 +143,24 @@ class PageIndex:
         if len(q) < 3:
             return []
         return [i + 1 for i, page in enumerate(self._norm)
-                if fuzz.partial_ratio(q, page) >= threshold or segments_on_page(q, page) or words_in_order(q, page)]
+                if fuzz.partial_ratio(q, page) >= threshold or segments_on_page(q, page) or words_in_order(q, page)
+                or pieces_in_order(q, page, threshold)]
+
+
+def pieces_in_order(q: str, page: str, threshold: int) -> bool:
+    """A quote shortened with '...' ("Coml Auto ... Incurred $327,024"): every piece is on the page,
+    in the same order. Each piece is matched exactly, so digits can't drift."""
+    parts = [s.strip() for s in q.replace("…", "...").split("...")]
+    parts = [s for s in parts if s]
+    if len(parts) < 2:
+        return False
+    at = 0
+    for part in parts:
+        found = page.find(part, at)
+        if found < 0:
+            return False
+        at = found + len(part)
+    return True
 
 
 def words_in_order(q: str, page: str, max_gap: int = 8) -> bool:

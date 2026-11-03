@@ -116,6 +116,9 @@ export default function TemplateEditor() {
             {isNew ? "create the template" : "save"}.
           </p>
           <p className="mt-0.5 text-xs text-ink-2">The descriptions are what the extraction and verification models read, so make them specific to your documents.</p>
+          {(draft?.warnings ?? []).map((w, i) => (
+            <p key={i} className="mt-1.5 text-xs text-review">{w}</p>
+          ))}
         </div>
       )}
 

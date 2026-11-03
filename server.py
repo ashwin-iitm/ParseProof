@@ -268,9 +268,16 @@ class DraftIn(BaseModel):
     document_id: Optional[str] = None
 
 
+# A text field described like this holds a whole table or list, not one value
+MULTI_VALUE = re.compile(r"(?i)\b(summary of|format(ted)? as (a )?(string|list|text)|list (of|all|each)|breakdown|"
+                         r"for each|each (line|row|period|claim|item)|by (line|period|year|status|coverage|claimant)|"
+                         r"all (claims|rows|lines|items)|comma[- ]separated)\b")
+
+
 def clean_draft(raw: Dict[str, Any]) -> Dict[str, Any]:
-    """Make an AI draft valid: proper keys, no duplicates, rules only over existing number fields."""
-    fields, seen = [], set()
+    """Make an AI draft valid: proper keys, no duplicates, rules only over existing number fields, and
+    no text fields that would hold a whole table (each field must be one value)."""
+    fields, seen, warnings = [], set(), []
     for f in raw.get("fields", []):
         key = re.sub(r"[^a-z0-9_]+", "_", (f.get("name") or f.get("label") or "").lower()).strip("_")[:64]
         if key and not key[0].isalpha():
@@ -278,6 +285,11 @@ def clean_draft(raw: Dict[str, Any]) -> Dict[str, Any]:
         if not key or key in seen:
             continue
         seen.add(key)
+        description = (f.get("description") or "").strip()
+        if f.get("type") not in ("number", "date") and MULTI_VALUE.search(description):
+            warnings.append(f"Left out \"{(f.get('label') or key).strip()}\": it would hold a whole table or list "
+                            "in one field. Add one field per value you need instead, e.g. auto_incurred.")
+            continue
         fields.append({"name": key, "label": (f.get("label") or "").strip(), "description": (f.get("description") or "").strip(),
                        "type": f.get("type") if f.get("type") in ("string", "number", "date") else "string",
                        "required": bool(f.get("required"))})
@@ -287,7 +299,7 @@ def clean_draft(raw: Dict[str, Any]) -> Dict[str, Any]:
              if r.get("fields") and set(r["fields"]) <= numbers and r.get("equals") in numbers
              and r["equals"] not in r["fields"]]
     return {"name": (raw.get("name") or "Untitled template").strip(), "description": (raw.get("description") or "").strip(),
-            "fields": fields, "rules": rules}
+            "fields": fields, "rules": rules, "warnings": warnings}
 
 
 @app.post("/api/templates/draft")

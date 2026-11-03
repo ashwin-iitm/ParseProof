@@ -101,14 +101,37 @@ def as_page(value: Any) -> Optional[int]:
         return None
 
 
+NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def numbers_in(text: str) -> List[float]:
+    return [float(n.replace(",", "")) for n in NUMBER.findall(text)]
+
+
 def value_in_quote(value: Any, quote: str) -> bool:
-    """Is a corrected value actually stated in the evidence? Digits must match exactly."""
+    """Is a corrected value actually stated in the evidence? Digits must match exactly, and every
+    number in the value must be a whole number in the quote: a correction of 0 needs a real 0 amount,
+    not just a 0 inside some other number."""
     if is_empty(value):
         return False
-    digits = re.sub(r"\D", "", str(value))
-    if digits:
-        return digits in re.sub(r"\D", "", quote)
+    wanted = numbers_in(str(value))
+    if wanted:
+        in_quote = set(numbers_in(quote))  # as numbers, so 03/07/2026 matches 3/7/2026 and 50,000.00 matches 50,000
+        return all(n in in_quote for n in wanted)
     return fuzz.partial_ratio(normalize(value), normalize(quote)) >= QUOTE_MATCH_THRESHOLD
+
+
+def same_value(a: Any, b: Any) -> bool:
+    """The checker's "correction" is the extracted value again: the same letters and digits once
+    symbols and spaces are dropped (548867 and $548,867), or the same numbers (1,234.00 and 1234)."""
+    if is_empty(a) or is_empty(b):
+        return False
+    alnum = lambda x: re.sub(r"[^0-9a-z]", "", str(x).lower())  # noqa: E731
+    if alnum(a) and alnum(a) == alnum(b):
+        return True
+    na, nb = numbers_in(str(a)), numbers_in(str(b))
+    letters = lambda x: re.sub(r"[^a-z]", "", str(x).lower())  # noqa: E731
+    return bool(na) and na == nb and letters(a) == letters(b)
 
 
 def same_words(a: Any, b: Any) -> bool:
@@ -206,6 +229,7 @@ class FieldQCState(TypedDict, total=False):
     located_by: str
     citation_ok: Optional[bool]
     searched: bool
+    reasked: bool
     verdict: dict
     evidence_ok: bool
     evidence_page: Optional[int]
@@ -379,8 +403,12 @@ Decide:
 - Values like addresses span several lines. An extracted value that contains the same block (with
   different line breaks, or with/without the person's name or a repeated city/state/PIN) is "correct".
   Never build a value by joining lines that are not next to each other on the page.
+- If the extracted value is empty and these pages don't show the field, the answer is "not_found"
+  (that confirms the field is absent). Use "incorrect" only when the pages show a value for the field.
 Always give evidence_quote: a short VERBATIM quote (copied exactly, under 200 characters) from the
-pages that proves your verdict, and the page number it is on. Use null for both only when not_found.
+pages that proves your verdict, and the page number it is on. Copy one continuous piece of the page:
+never shorten it with "..." and never describe the page in your own words. Use null for both only
+when not_found.
 Return JSON: {"verdict": "correct"|"incorrect"|"not_found", "correct_value": str|null,
 "evidence_quote": str|null, "evidence_page": int|null, "reasoning": str}"""
 
@@ -425,6 +453,19 @@ def qc_search(s: FieldQCState) -> dict:
     return {"candidate_pages": checked + new_pages if new_pages else [], "searched": True, "located_by": "search"}
 
 
+REASK = ("Your evidence_quote is not on these pages word for word. Answer again with the same JSON. "
+         "Copy evidence_quote as ONE continuous piece of the page text, exactly as written: a whole line or "
+         "table row that contains the value. Do not join a column heading to a value and do not use '...'.")
+
+
+def clean_verdict(v: dict) -> dict:
+    """Models sometimes write the word null instead of a JSON null."""
+    cv = v.get("correct_value")
+    if isinstance(cv, str) and cv.strip().lower() in ("null", "none", "n/a", ""):
+        v = {**v, "correct_value": None}
+    return v
+
+
 def qc_verify(s: FieldQCState) -> dict:
     idx = _INDEXES[s["doc_id"]]
     spec, ex = s["spec"], s.get("extracted") or {}
@@ -436,36 +477,56 @@ def qc_verify(s: FieldQCState) -> dict:
     images = page_images(Path(s["file_path"]), pages) if s.get("file_path") else []
     if images:
         user += f"\n\nImages of pages {', '.join(map(str, pages[:QC_MAX_IMAGES]))} follow, in that order."
-    verdict = llm_json(s["qc_model"], QC_SYSTEM, user, images,
-                       step=f"QC check: {spec['name']}" + (" (after search)" if s.get("searched") else ""))
-    # Keep the request as sent (images stand in as labels) so reviewers can see what QC was given
-    content = [{"type": "text", "text": user}] + [
-        {"type": "image_url", "image_url": {"url": f"<page {p} as PNG, {QC_IMAGE_DPI} dpi>", "detail": "high"}}
-        for p in pages[:len(images)]]
-    call = {"model": s["qc_model"], "temperature": 0, "response_format": {"type": "json_object"},
-            "messages": [{"role": "system", "content": QC_SYSTEM},
-                         {"role": "user", "content": content if images else user}],
-            "response": verdict}
+    step = f"QC check: {spec['name']}" + (" (after search)" if s.get("searched") else "")
 
-    # Don't trust the auditor blindly either: its evidence must really be on the page
-    evidence_ok, evidence_page = False, None
-    if verdict.get("evidence_quote"):
+    def ask(text: str, label: str) -> Tuple[dict, dict]:
+        verdict = clean_verdict(llm_json(s["qc_model"], QC_SYSTEM, text, images, step=label))
+        # Keep the request as sent (images stand in as labels) so reviewers can see what QC was given
+        content = [{"type": "text", "text": text}] + [
+            {"type": "image_url", "image_url": {"url": f"<page {p} as PNG, {QC_IMAGE_DPI} dpi>", "detail": "high"}}
+            for p in pages[:len(images)]]
+        call = {"model": s["qc_model"], "temperature": 0, "response_format": {"type": "json_object"},
+                "messages": [{"role": "system", "content": QC_SYSTEM},
+                             {"role": "user", "content": content if images else text}],
+                "response": verdict}
+        return verdict, call
+
+    def proof_on_page(verdict: dict) -> Optional[int]:
+        """Don't trust the auditor blindly either: its evidence must really be on the page."""
+        if not verdict.get("evidence_quote"):
+            return None
         cited = as_page(verdict.get("evidence_page"))
         p, _ = idx.find_quote(verdict["evidence_quote"], [cited] if cited in pages else pages)
-        evidence_ok, evidence_page = p is not None, p
+        return p
+
+    verdict, call = ask(user, step)
+    calls = [call]
+    evidence_page = proof_on_page(verdict)
+    if verdict.get("evidence_quote") and evidence_page is None and not s.get("reasked"):
+        # One more try on the same pages, telling it what was wrong (counts as a model call)
+        retry_text = f"{user}\n\nYour previous answer:\n{json.dumps(verdict, ensure_ascii=False)}\n\n{REASK}"
+        verdict, call = ask(retry_text, step + " (re-ask: proof not on the page)")
+        calls.append(call)
+        evidence_page = proof_on_page(verdict)
+    evidence_ok = evidence_page is not None
 
     notes = list(s.get("notes", []))
+    if len(calls) > 1:
+        notes.append("The checker's first proof wasn't on the page word for word, so it was asked once more.")
     if verdict.get("evidence_quote") and not evidence_ok:
         notes.append("QC model's evidence quote was not found on the pages it was given.")
     elif (evidence_ok and verdict.get("verdict") == "incorrect"
+          # an empty field with no correction is handled as "not found" when the field is decided
+          and not (is_empty(ex.get("value")) and is_empty(verdict.get("correct_value")))
           and not value_in_quote(verdict.get("correct_value"), verdict["evidence_quote"])):
         evidence_ok = False
         notes.append(f"QC model's correction '{verdict.get('correct_value')}' is not stated in its evidence.")
     checked = s.get("pages_checked", [])
     return {
         "verdict": verdict, "evidence_ok": evidence_ok, "evidence_page": evidence_page, "notes": notes,
-        "pages_checked": checked + [p for p in pages if p not in checked], "llm_calls": s.get("llm_calls", 0) + 1,
-        "qc_calls": s.get("qc_calls", []) + [call],
+        "pages_checked": checked + [p for p in pages if p not in checked],
+        "llm_calls": s.get("llm_calls", 0) + len(calls), "reasked": s.get("reasked") or len(calls) > 1,
+        "qc_calls": s.get("qc_calls", []) + calls,
     }
 
 
@@ -474,9 +535,17 @@ def qc_finalize(s: FieldQCState) -> dict:
     verdict = s.get("verdict") or {}
     v = verdict.get("verdict")
     notes = list(s.get("notes", []))
+    # "Incorrect" with no corrected value, on a field that was left empty, means the field isn't there
+    if v == "incorrect" and is_empty(ex.get("value")) and is_empty(verdict.get("correct_value")):
+        v = "not_found"
+        verdict = {**verdict, "verdict": v}
 
     if v == "correct" and s.get("evidence_ok"):
         status = PASS
+    elif v == "incorrect" and s.get("evidence_ok") and same_value(ex.get("value"), verdict.get("correct_value")):
+        status, v = PASS, "correct"
+        notes.append("QC's suggested value is the same as the extracted one (only formatting differs), "
+                     "so it counts as verified.")
     elif (v == "incorrect" and s.get("evidence_ok") and spec.get("type", "string") == "string"
           and same_words(ex.get("value"), verdict.get("correct_value"))):
         status, v = PASS, "correct"
@@ -549,7 +618,8 @@ QC_AGENT = build_qc_agent()
 
 
 def qc_field(payload: dict) -> dict:
-    out = QC_AGENT.invoke({**payload, "notes": [], "pages_checked": [], "qc_calls": [], "llm_calls": 0, "searched": False})
+    out = QC_AGENT.invoke({**payload, "notes": [], "pages_checked": [], "qc_calls": [], "llm_calls": 0, "searched": False,
+                              "reasked": False})
     return {"qc_results": [out["result"]], "llm_calls": out.get("llm_calls", 0)}
 
 
