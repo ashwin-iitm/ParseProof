@@ -13,17 +13,9 @@ load_dotenv(ENV_FILE)
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-3-small")
 DIMS = 1536  # embedding dims for text-embedding-3-small
-MAX_CHARS = int(os.getenv("MAX_CHARS", 1000))
-OVERLAP_CHARS = int(os.getenv("OVERLAP_CHARS", 200))
 
-# Reranker model (used for reranking candidates, not gating)
+# Reranker for QC search: a small cross-encoder that runs locally
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-
-# Relevance threshold - FAISS vector similarity threshold for "relatedness"
-RELEVANCE_THRESHOLD = float(os.getenv("RELEVANCE_THRESHOLD", 0.15))  # Option A
-
-# QA model to call - you requested gpt-4o-mini ("40 MINI")
-QA_MODEL = os.getenv("QA_MODEL", "gpt-4o-mini")
 
 # Extraction + QC agents (agents.py)
 EXTRACT_MODEL = os.getenv("EXTRACT_MODEL", "gpt-4.1")  # reads PDFs natively (text + page images)
@@ -34,7 +26,6 @@ EXTRACT_BATCH_CHARS = int(os.getenv("EXTRACT_BATCH_CHARS", 40000))  # page text 
 QC_SEARCH_PAGES = int(os.getenv("QC_SEARCH_PAGES", 3))  # pages sent to the QC LLM when it has to search
 QUOTE_MATCH_THRESHOLD = int(os.getenv("QUOTE_MATCH_THRESHOLD", 85))  # fuzzy score (0-100) to accept a quote
 AGENT_MAX_CONCURRENCY = int(os.getenv("AGENT_MAX_CONCURRENCY", 8))
-REPORT_DIR = Path(os.getenv("REPORT_DIR", BASE_DIR / "reports"))
 
 # Product data (server.py): SQLite database, stored documents, saved RAG indexes
 DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR / "data"))
@@ -43,14 +34,9 @@ DOCUMENT_DIR = DATA_DIR / "documents"
 for _d in (INDEX_DIR, DOCUMENT_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
-# Upload directory and key file
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", BASE_DIR / "uploads"))
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-KEY_FILE = Path(os.getenv("FERNET_KEY_FILE", BASE_DIR / "secret.key"))
-
 # Logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("secure-rag")
+logger = logging.getLogger("adoverse")
 
 # -----------------------------
 # OPENAI CLIENT

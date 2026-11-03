@@ -1,8 +1,8 @@
 """
 doc_index.py — page-level hybrid index shared by the extraction and QC agents.
 
-Unlike app.py (1000-char chunks), every page is one retrieval unit, so QC can
-always point to an exact page. Retrieval = FAISS + BM25 -> RRF -> cross-encoder.
+Every page is one retrieval unit, so QC can always point to an exact page.
+Retrieval = FAISS + BM25 -> RRF -> cross-encoder.
 """
 
 import json

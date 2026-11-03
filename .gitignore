@@ -1,10 +1,8 @@
 # Secrets
 .env
-secret.key
 
 # Your documents, runs and database (created on first start)
 data/
-uploads/
 reports/
 
 # Python
@@ -17,25 +15,6 @@ __pycache__/
 web/node_modules/
 web/dist/
 web/tsconfig.tsbuildinfo
-
-# Local experiments and old prototypes, not part of the app
-claw.py
-upload_post_test.py
-DDE_Test.py
-new.py
-app.py
-agent_app.py
-security.py
-storage.py
-pdf-vector.py
-question-vector.py
-test_chunking.py
-test_citations.py
-chunks.pkl
-memory.index
-memory.pkl
-vectors.index
-AGENTS_README.md
 
 # Editors and OS
 .vscode/

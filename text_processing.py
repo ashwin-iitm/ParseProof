@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
-from typing import List, Tuple
-from config import logger, MAX_CHARS, OVERLAP_CHARS
+from typing import List
+from config import logger
 
 # Optional imports (graceful)
 try:
@@ -14,12 +14,6 @@ try:
 except Exception:
     docx = None
 
-# tiktoken optional
-try:
-    import tiktoken
-    TIKTOKEN_AVAILABLE = True
-except Exception:
-    TIKTOKEN_AVAILABLE = False
 
 # -----------------------------
 # FILE TEXT EXTRACTION
@@ -64,65 +58,3 @@ def extract_text_from_file(file_path: Path) -> List[str]:
         return pages or [""]
 
     raise ValueError(f"Unsupported file type: {ext}")
-
-# -----------------------------
-# TEXT CHUNKING (RECURSIVE)
-# -----------------------------
-def recursive_chunk_text(text: str, max_chars: int = MAX_CHARS, overlap: int = OVERLAP_CHARS) -> List[str]:
-    separators = ["\n\n", "\n", ". ", " ", ""]
-
-    def split_with_seps(s: str, seps: List[str]) -> List[str]:
-        if not seps:
-            out = []
-            step = max_chars - overlap if max_chars > overlap else max_chars
-            for i in range(0, len(s), step):
-                out.append(s[i:i + max_chars])
-            return out
-
-        sep = seps[0]
-        parts = s.split(sep)
-        chunks = []
-        cur_parts = []
-        cur_len = 0
-
-        for part in parts:
-            part_len = len(part)
-            additional = (len(sep) if cur_parts else 0)
-            if cur_len + part_len + additional > max_chars:
-                if cur_parts:
-                    chunks.append(sep.join(cur_parts))
-                cur_parts = [part]
-                cur_len = part_len
-            else:
-                cur_parts.append(part)
-                cur_len += part_len + additional
-
-        if cur_parts:
-            chunks.append(sep.join(cur_parts))
-
-        verified = []
-        for c in chunks:
-            if len(c) > max_chars:
-                verified.extend(split_with_seps(c, seps[1:]))
-            else:
-                verified.append(c)
-        return verified
-
-    return split_with_seps(text, separators)
-
-def chunk_texts(pages: List[str]) -> Tuple[List[str], List[dict]]:
-    combined = "\n\n".join([f"[PAGE:{i+1}]\n{p}" for i, p in enumerate(pages)])
-    raw_chunks = recursive_chunk_text(combined, MAX_CHARS, OVERLAP_CHARS)
-    chunks = []
-    metadata = []
-    for i, c in enumerate(raw_chunks):
-        est_page = 1
-        pos = c.find("[PAGE:")
-        if pos != -1:
-            try:
-                est_page = int(c[pos + 6: c.find("]", pos)])
-            except Exception:
-                pass
-        chunks.append(c)
-        metadata.append({"start_pos": i, "estimated_page": est_page})
-    return chunks, metadata

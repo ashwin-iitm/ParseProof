@@ -4,8 +4,6 @@ from sentence_transformers import CrossEncoder
 from typing import List
 from config import client, EMBED_MODEL, DIMS, RERANKER_MODEL, logger, record_usage
 
-from rank_bm25 import BM25Okapi
-
 # -----------------------------
 # RERANKER
 # -----------------------------
@@ -53,6 +51,3 @@ def build_faiss_index(emb: np.ndarray) -> faiss.IndexFlatIP:
     idx.add(emb)
     return idx
 
-def build_bm25_index(chunks: List[str]) -> BM25Okapi:
-    tokenized = [c.split() for c in chunks]
-    return BM25Okapi(tokenized)
