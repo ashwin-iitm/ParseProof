@@ -11,26 +11,27 @@
   --bg: #f5f7fa; --surface: #ffffff; --sunk: #edf1f6; --ink: #16202c; --ink-2: #4a5567; --ink-3: #6f7a8b;
   --line: #d9e0ea; --accent: #2350c4;
   --py: #5f6b7c; --py-bg: #eef1f5; --ex: #1f5fe0; --ex-bg: #e6eefd; --qc: #7034d6; --qc-bg: #f1eafd;
-  --hu: #16794a; --hu-bg: #e4f4ea; --bad: #b4232c; --bad-bg: #fbe9ea; --warn: #9a5a00; --warn-bg: #fdf1dc;
+  --lo: #0b7a75; --lo-bg: #e1f4f2; --hu: #16794a; --hu-bg: #e4f4ea;
+  --bad: #b4232c; --bad-bg: #fbe9ea; --warn: #9a5a00; --warn-bg: #fdf1dc;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0e131a; --surface: #151c26; --sunk: #1b2430; --ink: #e5ebf3; --ink-2: #a3aebd; --ink-3: #7f8a9a; --line: #2a3546; --accent: #86a7ff;
-  --py: #a4aebc; --py-bg: #1f2833; --ex: #7aa6ff; --ex-bg: #172640; --qc: #b89cff; --qc-bg: #241c3c; --hu: #5fd394; --hu-bg: #14301f;
-  --bad: #ff8a90; --bad-bg: #3a1a1d; --warn: #f2b25a; --warn-bg: #33260f; color-scheme: dark; } }
+  --py: #a4aebc; --py-bg: #1f2833; --ex: #7aa6ff; --ex-bg: #172640; --qc: #b89cff; --qc-bg: #241c3c; --lo: #5fd1c8; --lo-bg: #12302e;
+  --hu: #5fd394; --hu-bg: #14301f; --bad: #ff8a90; --bad-bg: #3a1a1d; --warn: #f2b25a; --warn-bg: #33260f; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0e131a; --surface: #151c26; --sunk: #1b2430; --ink: #e5ebf3; --ink-2: #a3aebd; --ink-3: #7f8a9a; --line: #2a3546; --accent: #86a7ff;
-  --py: #a4aebc; --py-bg: #1f2833; --ex: #7aa6ff; --ex-bg: #172640; --qc: #b89cff; --qc-bg: #241c3c; --hu: #5fd394; --hu-bg: #14301f;
-  --bad: #ff8a90; --bad-bg: #3a1a1d; --warn: #f2b25a; --warn-bg: #33260f; color-scheme: dark; }
+  --py: #a4aebc; --py-bg: #1f2833; --ex: #7aa6ff; --ex-bg: #172640; --qc: #b89cff; --qc-bg: #241c3c; --lo: #5fd1c8; --lo-bg: #12302e;
+  --hu: #5fd394; --hu-bg: #14301f; --bad: #ff8a90; --bad-bg: #3a1a1d; --warn: #f2b25a; --warn-bg: #33260f; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 17px/1.65 var(--f-body); margin: 0;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px; }
-main { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 60px; }
-section { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.prose { max-width: 68ch; }
+main { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 60px; }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0; scroll-margin-top: 16px; }
+.prose { max-width: 70ch; }
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
 h1 { font-size: clamp(34px, 6vw, 52px); letter-spacing: -0.02em; }
 h2 { font-size: clamp(25px, 3.6vw, 32px); letter-spacing: -0.01em; }
@@ -40,35 +41,39 @@ a { color: var(--accent); }
 code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
 :not(pre) > code { background: var(--sunk); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
 .eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
-.lede { font-size: 20px; color: var(--ink-2); max-width: 62ch; }
+.lede { font-size: 20px; color: var(--ink-2); max-width: 64ch; }
 .muted { color: var(--ink-2); }
-.num-h { font: 700 13px/1 var(--f-mono); color: var(--accent); letter-spacing: 0.06em; }
 
 .who { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--f-body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
 .who::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .who.py { color: var(--py); background: var(--py-bg); } .who.ex { color: var(--ex); background: var(--ex-bg); }
-.who.qc { color: var(--qc); background: var(--qc-bg); } .who.hu { color: var(--hu); background: var(--hu-bg); }
+.who.qc { color: var(--qc); background: var(--qc-bg); } .who.lo { color: var(--lo); background: var(--lo-bg); }
+.who.hu { color: var(--hu); background: var(--hu-bg); }
 .legend { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* answers to the two big questions */
-.answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+nav.toc { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; }
+nav.toc ol { margin: 8px 0 0; padding-left: 22px; columns: 2 260px; column-gap: 28px; font-size: 15.5px; }
+nav.toc li { break-inside: avoid; padding: 2px 0; }
+
+.answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; }
 .answer { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
 .answer .q { font: 700 15px/1.4 var(--f-body); color: var(--ink-2); }
 .answer .a { font: 700 20px/1.3 var(--f-display); }
 .answer p { font-size: 15.5px; color: var(--ink-2); }
 
-/* steps */
 .steps { display: flex; flex-direction: column; counter-reset: step; }
 .step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 16px; padding-bottom: 34px; position: relative; }
-.step::before { counter-increment: step; content: counter(step); grid-row: 1 / span 20; width: 36px; height: 36px; border-radius: 50%;
+.step::before { counter-increment: step; content: counter(step); grid-row: 1 / span 30; width: 36px; height: 36px; border-radius: 50%;
   display: grid; place-items: center; font: 700 15px/1 var(--f-mono); color: var(--surface); background: var(--c, var(--py)); position: relative; z-index: 1; }
 .step::after { content: ""; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: var(--line); }
 .step:last-child::after { display: none; }
-.step.py { --c: var(--py); } .step.ex { --c: var(--ex); } .step.qc { --c: var(--qc); } .step.hu { --c: var(--hu); }
+.step.py { --c: var(--py); } .step.ex { --c: var(--ex); } .step.qc { --c: var(--qc); } .step.lo { --c: var(--lo); } .step.hu { --c: var(--hu); }
 .step-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 4px; }
 .kid { border-left: 3px solid var(--c, var(--py)); padding: 2px 0 2px 14px; color: var(--ink-2); font-style: italic; }
-ul.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.sends { font-size: 15px; color: var(--ink-2); background: var(--sunk); border-radius: 8px; padding: 10px 14px; }
+.sends b { color: var(--ink); }
+ul.plain, ol.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 
 pre { margin: 0; background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto;
   font: 13px/1.6 var(--f-mono); color: var(--ink); }
@@ -79,7 +84,6 @@ pre .c { color: var(--ink-3); } pre .k { color: var(--accent); font-weight: 600;
 
 .callout { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
 .callout.key { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.callout.warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); background: color-mix(in srgb, var(--warn-bg) 55%, var(--surface)); }
 .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
 .tag { font: 700 12px/1 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
 
@@ -88,15 +92,13 @@ table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 620p
 th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
 th { font: 600 12px/1.4 var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); background: var(--sunk); }
 tr:last-child td { border-bottom: 0; }
-td.num { font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 14px; white-space: nowrap; }
-#cost td.num { white-space: normal; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 14px; }
 td .t { font-weight: 700; display: block; }
 td .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-3); }
 tr.win td { background: color-mix(in srgb, var(--hu-bg) 70%, var(--surface)); }
 .group td { background: var(--sunk); font: 600 12px/1.4 var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
 .pass { color: var(--hu); font-weight: 700; } .fail { color: var(--bad); font-weight: 700; } .rev { color: var(--warn); font-weight: 700; }
 
-/* search funnel */
 .funnel { display: grid; gap: 10px; }
 .tier { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; align-items: center; background: var(--surface);
   border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
@@ -107,8 +109,8 @@ tr.win td { background: color-mix(in srgb, var(--hu-bg) 70%, var(--surface)); }
 
 figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .svgwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
-.svgwrap svg { display: block; width: 100%; min-width: 660px; height: auto; }
-figcaption { font-size: 14.5px; color: var(--ink-2); max-width: 70ch; }
+.svgwrap svg { display: block; width: 100%; min-width: 680px; height: auto; }
+figcaption { font-size: 14.5px; color: var(--ink-2); max-width: 72ch; }
 svg text { font-family: var(--f-body); }
 svg .lbl { fill: var(--ink); font-size: 13.5px; font-weight: 700; }
 svg .sub { fill: var(--ink-2); font-size: 11.5px; }
@@ -116,15 +118,16 @@ svg .cap { fill: var(--ink-3); font-size: 11px; font-weight: 700; letter-spacing
 svg .edge { stroke: var(--ink-3); stroke-width: 1.6; fill: none; }
 svg .edge.loop { stroke: var(--qc); stroke-dasharray: 5 4; }
 svg .edge.idx { stroke: var(--py); stroke-dasharray: 3 4; }
+svg .edge.exe { stroke: var(--ex); stroke-width: 2.4; }
 svg .elbl { fill: var(--ink-2); font-size: 11.5px; }
 svg .elbl.loop { fill: var(--qc); } svg .elbl.ex { fill: var(--ex); font-weight: 700; }
 svg .n-py { fill: var(--py-bg); stroke: var(--py); stroke-width: 1.4; }
 svg .n-ex { fill: var(--ex-bg); stroke: var(--ex); stroke-width: 1.4; }
 svg .n-qc { fill: var(--qc-bg); stroke: var(--qc); stroke-width: 1.4; }
+svg .n-lo { fill: var(--lo-bg); stroke: var(--lo); stroke-width: 1.4; }
 svg .n-hu { fill: var(--hu-bg); stroke: var(--hu); stroke-width: 1.4; }
 svg .n-doc { fill: var(--surface); stroke: var(--ink-3); stroke-width: 1.4; }
-svg .ah { fill: var(--ink-3); } svg .ah.loop { fill: var(--qc); } svg .ah.idx { fill: var(--py); }
-svg .edge.exe { stroke: var(--ex); stroke-width: 2.2; } svg .ah.exe { fill: var(--ex); }
+svg .ah { fill: var(--ink-3); } svg .ah.loop { fill: var(--qc); } svg .ah.idx { fill: var(--py); } svg .ah.exe { fill: var(--ex); }
 
 hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
 footer { color: var(--ink-3); font-size: 14px; }
@@ -141,132 +144,195 @@ footer { color: var(--ink-3); font-size: 14px; }
 <header style="display:flex;flex-direction:column;gap:16px">
   <span class="eyebrow">ParseProof · how it works</span>
   <h1>How ParseProof reads a document and proves every answer</h1>
-  <p class="lede">We follow one made-up insurance policy from the moment you upload it to the moment you export the data. Every box on this page is a real step in the code, and the colour tells you who does it.</p>
+  <p class="lede">We follow one made-up insurance policy from the moment you upload it to the moment you export the data. Every step, every model, every number and everything that is sent to OpenAI is on this page, taken from the code. The colour always tells you who does the step.</p>
   <div class="legend" aria-label="Colour key">
     <span class="who py">Python code (no AI)</span>
-    <span class="who ex">Extractor AI · gpt-4.1</span>
-    <span class="who qc">Checker AI · gpt-4o</span>
+    <span class="who ex">OpenAI model: gpt-4.1, gpt-4.1-mini, embeddings</span>
+    <span class="who qc">QC checker: gpt-4o</span>
+    <span class="who lo">Small AI model on your computer</span>
     <span class="who hu">You</span>
   </div>
 </header>
 
-<section>
-  <h2>The two questions everyone asks first</h2>
+<nav class="toc" aria-label="Contents">
+  <span class="tag">On this page</span>
+  <ol>
+    <li><a href="#short">Short answers to common questions</a></li>
+    <li><a href="#models">Every model we use</a></li>
+    <li><a href="#example">The example policy</a></li>
+    <li><a href="#journey">The whole journey in one diagram</a></li>
+    <li><a href="#roads">PDF versus Excel or Word</a></li>
+    <li><a href="#steps">Step by step, with the policy</a></li>
+    <li><a href="#qc">Inside one QC check</a></li>
+    <li><a href="#python">How Python checks a quote</a></li>
+    <li><a href="#search">How the search finds pages</a></li>
+    <li><a href="#data">What is sent to OpenAI</a></li>
+    <li><a href="#cost">What it costs</a></li>
+    <li><a href="#agents">Is this an AI agent?</a></li>
+    <li><a href="#numbers">Every number and limit</a></li>
+    <li><a href="#tech">Every technology</a></li>
+    <li><a href="#faq">More questions people ask</a></li>
+  </ol>
+</nav>
+
+<section id="short">
+  <h2>Short answers to common questions</h2>
   <div class="answers">
     <div class="answer">
-      <span class="q">Does Python read the PDF and send its text to the AI?</span>
-      <span class="a">No. The PDF file itself goes to the AI.</span>
-      <p>For a PDF, ParseProof sends the actual file to gpt-4.1. OpenAI reads its text and looks at a picture of every page, so tables, stamps and scans work. Python also reads the pages, but only to build a search index and to check quotes later. Python's text is not what the extractor reads.</p>
-      <p>Excel, Word and CSV files are different. The AI can't take those files directly, so Python turns them into text first and sends that text.</p>
+      <span class="q">Does Python read the PDF and send its text to the AI that extracts the data?</span>
+      <span class="a">No. The extractor gets the PDF file itself.</span>
+      <p>For a PDF, gpt-4.1 receives the actual file. OpenAI reads its text and looks at a picture of every page, so tables, stamps and scans work. For Excel, Word and CSV it's different: Python turns them into text first, and that text is sent.</p>
+    </div>
+    <div class="answer">
+      <span class="q">Then what does Python do with the pages?</span>
+      <span class="a">It reads every page and sends all the text to OpenAI's embedding model.</span>
+      <p>Before extraction starts, Python takes the text of every page and sends it to <code>text-embedding-3-small</code>, which turns each page into 1,536 numbers. Those numbers and a word count of each page become the search index. The index is only used later, by the QC checker, to find pages and to check quotes.</p>
     </div>
     <div class="answer">
       <span class="q">If Python finds the exact quote on the page, does the checker AI still run?</span>
-      <span class="a">Yes. The checker AI always runs.</span>
-      <p>Python answers “is this sentence really on page 2?” It can't answer “is this the right value for this field?” A sentence can be real and still be the wrong answer, for example the flood deductible instead of the policy deductible. So every field gets one gpt-4o check. The only time no checker AI runs is when no page can be found at all.</p>
+      <span class="a">Yes. Every field gets a gpt-4o check.</span>
+      <p>Python can prove a sentence is on page 41. It can't tell whether that sentence answers the field: the flood deductible is a real sentence, but not the policy's deductible. The only time no checker AI runs is when no page can be found at all.</p>
+    </div>
+    <div class="answer">
+      <span class="q">Does the checker AI read the whole document?</span>
+      <span class="a">No. Only 1 to 4 pages per field.</span>
+      <p>It gets the text and a picture of the page the answer came from, or of the pages the search found. That keeps it focused and cheap.</p>
     </div>
   </div>
 </section>
 
-<section>
-  <h2>Our example document</h2>
-  <p class="prose">A 60-page commercial general liability policy from a made-up insurer, <b>Northstar Insurance Co.</b>, for a made-up customer, <b>Bluefin Logistics Pvt. Ltd.</b> We run it with the <b>Insurance policy</b> template, which asks for 14 fields. These are the pages that matter:</p>
+<section id="models">
+  <h2>Every model we use</h2>
+  <p class="prose">ParseProof uses six models: five during a run, and one more only when you ask AI to draft a template.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th style="width:22%">Model</th><th style="width:14%">Runs on</th><th>Job</th><th style="width:30%">When it is called</th></tr></thead>
+      <tbody>
+        <tr><td><span class="t">text-embedding-3-small</span><span class="where">embedding model</span></td><td>OpenAI</td><td>Turns text into 1,536 numbers that describe its meaning. It doesn't write or decide anything.</td><td>Once per page the first time a file is run (all pages), and once per search question during QC</td></tr>
+        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">OCR</span></td><td>OpenAI</td><td>Types out the words on a scanned page</td><td>Only for PDF pages with almost no text (fewer than 25 characters)</td></tr>
+        <tr><td><span class="t">gpt-4.1</span><span class="where">extractor</span></td><td>OpenAI</td><td>Reads the document and answers every field with value, page, quote and confidence</td><td>Once per 40 PDF pages, all at the same time</td></tr>
+        <tr><td><span class="t">gpt-4.1</span><span class="where">self-check</span></td><td>OpenAI</td><td>Re-reads a page when its first quote isn't in the document</td><td>Rarely; one call for all such fields</td></tr>
+        <tr><td><span class="t">gpt-4o</span><span class="where">QC checker</span></td><td>OpenAI</td><td>Judges whether a value is right, using only 1 to 4 pages</td><td>Once per field, twice if it has to search</td></tr>
+        <tr><td><span class="t">ms-marco-MiniLM-L-6-v2</span><span class="where">reranker</span></td><td>Your computer</td><td>Scores how well a page answers a search question</td><td>During a QC search, for up to 10 pages. Free.</td></tr>
+        <tr><td><span class="t">gpt-4.1</span><span class="where">template drafting</span></td><td>OpenAI</td><td>Designs a template from your description and a sample document</td><td>Only when you click Create with AI. Not part of a run.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">gpt-4.1, gpt-4o and gpt-4.1-mini are chat models: they read and write. The embedding model and the reranker only produce numbers. All the OpenAI models can be changed under Settings.</p>
+</section>
+
+<section id="example">
+  <h2>The example policy</h2>
+  <p class="prose">A 60-page commercial general liability policy from a made-up insurer, <b>Northstar Insurance Co.</b>, for a made-up customer, <b>Bluefin Logistics Pvt. Ltd.</b> We run it with the <b>Insurance policy</b> template, which asks for 14 fields and has one sum rule: <code>premium + taxes_and_fees = total_cost</code>. These pages matter:</p>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Page</th><th>What is on it</th><th>Fields found there</th></tr></thead>
       <tbody>
         <tr><td class="num">2</td><td>Declarations page</td><td>Policy number <code>NSI-CGL-2026-004512</code>, named insured, policy period 01 Apr 2026 to 31 Mar 2027, <b>Deductible: ₹50,000 each claim</b></td></tr>
         <tr><td class="num">3</td><td>Premium schedule</td><td>Premium ₹4,20,000 · Taxes and fees ₹75,600 · Total ₹4,95,600</td></tr>
-        <tr><td class="num">7</td><td>Conditions</td><td>Explains how deductibles work, but has no amount</td></tr>
-        <tr><td class="num">41</td><td>Flood endorsement (an add-on)</td><td><b>Flood deductible: ₹2,50,000 per occurrence</b>. This is a trap: it is not the policy's main deductible.</td></tr>
-        <tr><td class="num">58</td><td>Signature page, scanned</td><td>No text layer, only a picture</td></tr>
+        <tr><td class="num">7</td><td>Conditions</td><td>Explains how deductibles work, with no amount</td></tr>
+        <tr><td class="num">41</td><td>Flood endorsement (an add-on)</td><td><b>Flood deductible: ₹2,50,000 per occurrence</b>. A trap: it is not the policy's main deductible.</td></tr>
+        <tr><td class="num">58</td><td>Signature page, scanned</td><td>Only a picture, no text layer</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
-<section>
-  <h2>The whole journey on one page</h2>
+<section id="journey">
+  <h2>The whole journey in one diagram</h2>
   <figure>
     <div class="svgwrap">
-      <svg viewBox="0 0 900 470" role="img" aria-label="Flow: you upload the policy. The PDF file itself goes to the extractor AI, which returns JSON answers. Python fixes page numbers and runs a self-check. In parallel, Python reads every page and builds a page index. Each field then goes to its own QC agent, which uses the index. Python runs rule checks, and you review the result.">
+      <svg viewBox="0 0 920 560" role="img" aria-label="Three rows. Row 1, runs first: you upload; Python reads the text of every page; scanned pages go to gpt-4.1-mini for OCR; all page text goes to OpenAI's embedding model; the numbers and word counts are saved as the page index. Row 2: the PDF file itself goes to gpt-4.1, which returns JSON answers; Python fixes page numbers and runs the self-check. Row 3: one QC check per field, using the index; Python rule checks; you review and export.">
         <defs>
           <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker>
           <marker id="a1x" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah exe"/></marker>
           <marker id="a1i" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah idx"/></marker>
         </defs>
 
-        <text x="20" y="22" class="cap">EXTRACT</text>
-        <rect x="20" y="40" width="150" height="74" rx="8" class="n-doc"/>
-        <text x="95" y="70" text-anchor="middle" class="lbl">You upload</text>
-        <text x="95" y="90" text-anchor="middle" class="sub">policy.pdf · 60 pages</text>
+        <text x="200" y="24" class="cap">1 · PREPARE THE PAGES · runs first</text>
+        <rect x="20" y="40" width="140" height="74" rx="8" class="n-doc"/>
+        <text x="90" y="70" text-anchor="middle" class="lbl">You upload</text>
+        <text x="90" y="90" text-anchor="middle" class="sub">policy.pdf · 60 pages</text>
 
-        <rect x="240" y="40" width="190" height="74" rx="8" class="n-ex"/>
-        <text x="335" y="70" text-anchor="middle" class="lbl">Extractor AI</text>
-        <text x="335" y="90" text-anchor="middle" class="sub">gpt-4.1 reads the file</text>
+        <rect x="200" y="40" width="180" height="74" rx="8" class="n-py"/>
+        <text x="290" y="66" text-anchor="middle" class="lbl">Python reads pages</text>
+        <text x="290" y="86" text-anchor="middle" class="sub">text of all 60 pages</text>
+        <text x="290" y="102" text-anchor="middle" class="sub">(PyMuPDF)</text>
 
-        <rect x="500" y="40" width="160" height="74" rx="8" class="n-ex"/>
-        <text x="580" y="70" text-anchor="middle" class="lbl">JSON answers</text>
-        <text x="580" y="90" text-anchor="middle" class="sub">value · page · quote</text>
+        <rect x="420" y="40" width="200" height="74" rx="8" class="n-ex"/>
+        <text x="520" y="66" text-anchor="middle" class="lbl">Embedding model</text>
+        <text x="520" y="86" text-anchor="middle" class="sub">text-embedding-3-small</text>
+        <text x="520" y="102" text-anchor="middle" class="sub">page text → 1,536 numbers</text>
 
-        <rect x="720" y="40" width="160" height="74" rx="8" class="n-py"/>
-        <text x="800" y="64" text-anchor="middle" class="lbl">Python tidies up</text>
-        <text x="800" y="84" text-anchor="middle" class="sub">fixes page numbers</text>
-        <text x="800" y="100" text-anchor="middle" class="sub">+ self-check</text>
+        <rect x="660" y="40" width="240" height="74" rx="8" class="n-py"/>
+        <text x="780" y="66" text-anchor="middle" class="lbl">Page index, saved on disk</text>
+        <text x="780" y="86" text-anchor="middle" class="sub">FAISS: the numbers</text>
+        <text x="780" y="102" text-anchor="middle" class="sub">BM25: word counts</text>
 
-        <line x1="170" y1="77" x2="236" y2="77" class="edge exe" marker-end="url(#a1x)"/>
-        <text x="203" y="62" text-anchor="middle" class="elbl ex">the PDF</text>
-        <text x="203" y="100" text-anchor="middle" class="elbl ex">file itself</text>
-        <line x1="430" y1="77" x2="496" y2="77" class="edge" marker-end="url(#a1)"/>
-        <line x1="660" y1="77" x2="716" y2="77" class="edge" marker-end="url(#a1)"/>
+        <rect x="200" y="150" width="180" height="58" rx="8" class="n-ex"/>
+        <text x="290" y="174" text-anchor="middle" class="lbl">OCR · gpt-4.1-mini</text>
+        <text x="290" y="193" text-anchor="middle" class="sub">page 58 picture → text</text>
 
-        <text x="240" y="182" class="cap">PREPARE FOR CHECKING · runs first, takes seconds</text>
-        <rect x="240" y="200" width="190" height="74" rx="8" class="n-py"/>
-        <text x="335" y="226" text-anchor="middle" class="lbl">Python reads pages</text>
-        <text x="335" y="246" text-anchor="middle" class="sub">text of each page (PyMuPDF)</text>
-        <text x="335" y="262" text-anchor="middle" class="sub">OCR only for page 58</text>
+        <line x1="160" y1="77" x2="196" y2="77" class="edge" marker-end="url(#a1)"/>
+        <line x1="380" y1="77" x2="416" y2="77" class="edge" marker-end="url(#a1)"/>
+        <text x="398" y="64" text-anchor="middle" class="elbl">all text</text>
+        <line x1="620" y1="77" x2="656" y2="77" class="edge" marker-end="url(#a1)"/>
+        <line x1="270" y1="114" x2="270" y2="146" class="edge" marker-end="url(#a1)"/>
+        <line x1="310" y1="146" x2="310" y2="118" class="edge" marker-end="url(#a1)"/>
+        <text x="318" y="136" class="elbl">scans only</text>
 
-        <rect x="500" y="200" width="160" height="74" rx="8" class="n-py"/>
-        <text x="580" y="226" text-anchor="middle" class="lbl">Page index</text>
-        <text x="580" y="246" text-anchor="middle" class="sub">FAISS + BM25</text>
-        <text x="580" y="262" text-anchor="middle" class="sub">saved, reused next time</text>
+        <text x="200" y="262" class="cap">2 · EXTRACT</text>
+        <rect x="200" y="278" width="180" height="74" rx="8" class="n-ex"/>
+        <text x="290" y="306" text-anchor="middle" class="lbl">Extractor · gpt-4.1</text>
+        <text x="290" y="326" text-anchor="middle" class="sub">reads the PDF file itself</text>
 
-        <polyline points="95,114 95,237 236,237" class="edge" marker-end="url(#a1)"/>
-        <text x="105" y="226" class="elbl">same file</text>
-        <line x1="430" y1="237" x2="496" y2="237" class="edge" marker-end="url(#a1)"/>
+        <rect x="420" y="278" width="200" height="74" rx="8" class="n-ex"/>
+        <text x="520" y="306" text-anchor="middle" class="lbl">JSON answers</text>
+        <text x="520" y="326" text-anchor="middle" class="sub">value · page · quote</text>
 
-        <text x="20" y="342" class="cap">CHECK AND REVIEW</text>
-        <rect x="700" y="360" width="180" height="84" rx="8" class="n-qc"/>
-        <rect x="706" y="366" width="180" height="84" rx="8" class="n-qc" opacity="0.5"/>
-        <rect x="700" y="360" width="180" height="84" rx="8" class="n-qc"/>
-        <text x="790" y="390" text-anchor="middle" class="lbl">QC agent × 14</text>
-        <text x="790" y="410" text-anchor="middle" class="sub">one per field, at the same time</text>
-        <text x="790" y="426" text-anchor="middle" class="sub">Python + gpt-4o</text>
+        <rect x="660" y="278" width="240" height="74" rx="8" class="n-py"/>
+        <text x="780" y="304" text-anchor="middle" class="lbl">Python tidies up</text>
+        <text x="780" y="324" text-anchor="middle" class="sub">fixes page numbers</text>
+        <text x="780" y="340" text-anchor="middle" class="sub">+ self-check (gpt-4.1, rare)</text>
 
-        <rect x="470" y="365" width="170" height="74" rx="8" class="n-py"/>
-        <text x="555" y="394" text-anchor="middle" class="lbl">Rule checks</text>
-        <text x="555" y="414" text-anchor="middle" class="sub">sums, dates, required</text>
+        <polyline points="90,114 90,315 196,315" class="edge exe" marker-end="url(#a1x)"/>
+        <text x="100" y="268" class="elbl ex">the PDF</text>
+        <text x="100" y="284" class="elbl ex">file itself</text>
+        <line x1="380" y1="315" x2="416" y2="315" class="edge" marker-end="url(#a1)"/>
+        <line x1="620" y1="315" x2="656" y2="315" class="edge" marker-end="url(#a1)"/>
 
-        <rect x="240" y="365" width="170" height="74" rx="8" class="n-hu"/>
-        <text x="325" y="394" text-anchor="middle" class="lbl">You review</text>
-        <text x="325" y="414" text-anchor="middle" class="sub">approve, then export</text>
+        <text x="200" y="406" class="cap">3 · CHECK, THEN YOU REVIEW</text>
+        <rect x="666" y="428" width="240" height="84" rx="8" class="n-qc" opacity="0.5"/>
+        <rect x="660" y="422" width="240" height="84" rx="8" class="n-qc"/>
+        <text x="780" y="450" text-anchor="middle" class="lbl">QC check × 14 fields</text>
+        <text x="780" y="470" text-anchor="middle" class="sub">at the same time</text>
+        <text x="780" y="486" text-anchor="middle" class="sub">Python + gpt-4o + reranker</text>
 
-        <line x1="800" y1="114" x2="800" y2="356" class="edge" marker-end="url(#a1)"/>
-        <text x="810" y="240" class="elbl">every field</text>
-        <polyline points="660,237 740,237 740,356" class="edge idx" marker-end="url(#a1i)"/>
-        <text x="668" y="226" class="elbl">QC looks up pages here</text>
-        <line x1="700" y1="402" x2="644" y2="402" class="edge" marker-end="url(#a1)"/>
-        <line x1="470" y1="402" x2="414" y2="402" class="edge" marker-end="url(#a1)"/>
+        <rect x="420" y="427" width="200" height="74" rx="8" class="n-py"/>
+        <text x="520" y="456" text-anchor="middle" class="lbl">Rule checks</text>
+        <text x="520" y="476" text-anchor="middle" class="sub">required, numbers, dates, sums</text>
+
+        <rect x="200" y="427" width="180" height="74" rx="8" class="n-hu"/>
+        <text x="290" y="456" text-anchor="middle" class="lbl">You review</text>
+        <text x="290" y="476" text-anchor="middle" class="sub">approve, then export</text>
+
+        <line x1="760" y1="352" x2="760" y2="418" class="edge" marker-end="url(#a1)"/>
+        <text x="750" y="390" text-anchor="end" class="elbl">every field</text>
+        <polyline points="900,114 912,114 912,540 820,540 820,510" class="edge idx" marker-end="url(#a1i)"/>
+        <text x="808" y="532" text-anchor="end" class="elbl">QC uses the index</text>
+        <line x1="660" y1="464" x2="624" y2="464" class="edge" marker-end="url(#a1)"/>
+        <line x1="420" y1="464" x2="384" y2="464" class="edge" marker-end="url(#a1)"/>
       </svg>
     </div>
-    <figcaption>The thick blue arrow is the key point: the extractor gets the PDF file, not Python's text. Python's page text goes into the index, and only the checker (QC) uses it. Reading the pages and building the index happen first and take seconds. The index is saved, so a second run of the same file skips that part.</figcaption>
+    <figcaption>Step 1 happens first, before extraction, and takes seconds. It is saved under the file's fingerprint, so a second run of the same file skips it, including the embedding calls. The thick blue arrow is the key point: the extractor receives the PDF file, not Python's text. Python's text goes to the embedding model and into the index, which only the QC checks use.</figcaption>
   </figure>
 </section>
 
-<section>
-  <h2>PDF files and Excel or Word files take different roads</h2>
+<section id="roads">
+  <h2>PDF versus Excel or Word</h2>
   <figure>
     <div class="svgwrap">
-      <svg viewBox="0 0 900 230" role="img" aria-label="Top lane: a PDF file is sent as it is to gpt-4.1, which reads the text and page pictures. Bottom lane: an Excel, Word or CSV file is first turned into text by Python, one row or paragraph per page, and that text is sent to gpt-4.1. Both lanes return the same JSON answers.">
+      <svg viewBox="0 0 900 230" role="img" aria-label="Top lane: a PDF is sent as it is to gpt-4.1 in pieces of up to 40 pages. Bottom lane: an Excel, Word or CSV file is first turned into text by Python, one row or paragraph per page, and that text is sent to gpt-4.1 in batches of up to 40,000 characters. Both return the same JSON.">
         <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker></defs>
         <rect x="20" y="20" width="160" height="70" rx="8" class="n-doc"/>
         <text x="100" y="50" text-anchor="middle" class="lbl">PDF</text>
@@ -279,29 +345,29 @@ footer { color: var(--ink-3); font-size: 14px; }
 
         <rect x="20" y="140" width="160" height="70" rx="8" class="n-doc"/>
         <text x="100" y="170" text-anchor="middle" class="lbl">Excel · Word · CSV</text>
-        <text x="100" y="190" text-anchor="middle" class="sub">or a text file</text>
+        <text x="100" y="190" text-anchor="middle" class="sub">or a .txt file</text>
         <rect x="220" y="140" width="180" height="70" rx="8" class="n-py"/>
         <text x="310" y="166" text-anchor="middle" class="lbl">Python makes text</text>
         <text x="310" y="186" text-anchor="middle" class="sub">Excel: 1 row = 1 “page”</text>
         <text x="310" y="201" text-anchor="middle" class="sub">Word: 1 paragraph = 1 “page”</text>
         <rect x="430" y="140" width="230" height="70" rx="8" class="n-ex"/>
-        <text x="545" y="168" text-anchor="middle" class="lbl">gpt-4.1 gets that text</text>
-        <text x="545" y="188" text-anchor="middle" class="sub">labelled === PAGE 1 ===, …</text>
+        <text x="545" y="166" text-anchor="middle" class="lbl">gpt-4.1 gets that text</text>
+        <text x="545" y="186" text-anchor="middle" class="sub">up to 40,000 characters per call</text>
         <line x1="180" y1="175" x2="216" y2="175" class="edge" marker-end="url(#a2)"/>
         <line x1="400" y1="175" x2="426" y2="175" class="edge" marker-end="url(#a2)"/>
 
         <rect x="720" y="80" width="160" height="70" rx="8" class="n-ex"/>
         <text x="800" y="110" text-anchor="middle" class="lbl">Same JSON</text>
-        <text x="800" y="130" text-anchor="middle" class="sub">for both roads</text>
+        <text x="800" y="130" text-anchor="middle" class="sub">for both</text>
         <polyline points="660,55 690,55 690,105 716,105" class="edge" marker-end="url(#a2)"/>
         <polyline points="660,175 690,175 690,125 716,125" class="edge" marker-end="url(#a2)"/>
       </svg>
     </div>
-    <figcaption>A 60-page PDF fits in two calls (pages 1–40 and 41–60), which run at the same time. After this point both roads are identical.</figcaption>
+    <figcaption>Python does touch the PDF before extraction, but only to cut it into 40-page pieces: the pieces are still PDF files, not text. Our 60-page policy becomes two pieces, pages 1–40 and 41–60, sent at the same time. For both roads, the embedding index in step 1 is built from Python's text.</figcaption>
   </figure>
 </section>
 
-<section>
+<section id="steps">
   <h2>Step by step, with the policy</h2>
   <div class="steps">
 
@@ -309,41 +375,61 @@ footer { color: var(--ink-3); font-size: 14px; }
       <div class="step-body">
         <div class="step-head"><h3>You upload the file</h3><span class="who py">Python</span></div>
         <p class="kid">Handing the policy to the office.</p>
-        <p>The server saves <code>policy.pdf</code>, counts its 60 pages, and refuses it early if it is password-protected. You pick the Insurance policy template and click Extract and verify.</p>
+        <p>The server saves <code>policy.pdf</code> in <code>data/documents/</code>, checks it is a PDF, Word, Excel, CSV or text file under 100 MB, counts its 60 pages, and refuses it straight away if it is password-protected. You pick the Insurance policy template and click Extract and verify.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
       </div>
     </div>
 
     <div class="step py">
       <div class="step-body">
-        <div class="step-head"><h3>Python reads every page and builds the index</h3><span class="who py">Python</span><span class="who ex">gpt-4.1-mini, page 58 only</span></div>
-        <p class="kid">Photocopying every page and writing the index at the back of the book, before anyone asks a question.</p>
-        <ul class="plain">
-          <li><b>PyMuPDF</b> takes the text of each page, top to bottom and left to right.</li>
-          <li>Page 58 is a scan with no text, so <b>gpt-4.1-mini</b> reads its picture and types out the words. This is <b>OCR</b>. Only pages with almost no text get OCR.</li>
-          <li>Each page becomes 1,536 numbers that describe its meaning (an <b>embedding</b>, made by OpenAI's <code>text-embedding-3-small</code>). These go into <b>FAISS</b>.</li>
-          <li>Each page's words are counted for <b>BM25</b>.</li>
-          <li>The index is saved to disk under the file's fingerprint, so the next run of the same file skips all of this.</li>
-        </ul>
-        <p class="muted">This index is for the checker. The extractor never reads it.</p>
+        <div class="step-head"><h3>Python reads the text of every page</h3><span class="who py">Python</span></div>
+        <p class="kid">Photocopying every page so you can search it later.</p>
+        <p><b>PyMuPDF</b> takes each page's text in blocks, top to bottom and left to right, so a column stays together. For an Excel or CSV file each row becomes one “page”; for Word, each paragraph; a text file is one page. A PDF page with fewer than 25 characters of text is treated as a scan.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> nothing yet.</p>
       </div>
     </div>
 
     <div class="step ex">
       <div class="step-body">
-        <div class="step-head"><h3>The extractor AI reads the PDF and answers in JSON</h3><span class="who ex">gpt-4.1</span></div>
-        <p class="kid">The student answers every question and, for each one, writes the page number and copies the sentence that proves it.</p>
-        <p>ParseProof sends the PDF file with the list of 14 fields and their descriptions. A <b>strict JSON schema</b> forces the answer into the same shape every time, and <b>temperature 0</b> keeps it as repeatable as possible.</p>
+        <div class="step-head"><h3>OCR for scanned pages</h3><span class="who ex">gpt-4.1-mini</span></div>
+        <p class="kid">Someone types out the one page that was a photo.</p>
+        <p>Page 58 is a scan. Python draws it as a picture (150 dots per inch) and sends it to <b>gpt-4.1-mini</b> with the instruction “Transcribe all text on this page exactly”. The typed text replaces the empty page in Python's text. If several pages are scans, up to 8 are done at the same time.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> a picture of page 58 only.</p>
+      </div>
+    </div>
+
+    <div class="step ex">
+      <div class="step-body">
+        <div class="step-head"><h3>Python sends all page text to the embedding model, and builds the index</h3><span class="who py">Python</span><span class="who ex">text-embedding-3-small</span></div>
+        <p class="kid">Writing the index at the back of the book, before anyone asks a question.</p>
+        <ul class="plain">
+          <li>Python sends the text of <b>all 60 pages</b> to OpenAI's <code>text-embedding-3-small</code>, 8 pages per call (so 8 calls here), up to 24,000 characters per page.</li>
+          <li>For each page it gets back <b>1,536 numbers</b> that describe what the page is about. Pages about similar things get similar numbers.</li>
+          <li><b>FAISS</b>, on your computer, stores those numbers so it can compare them quickly later.</li>
+          <li><b>BM25</b>, also on your computer, counts the words on each page. No AI is involved in this part.</li>
+          <li>The page text, the numbers and the word counts are saved in <code>data/indexes/</code> under the file's fingerprint. Run the same file again and this whole step, including the embedding calls, is skipped.</li>
+        </ul>
+        <p class="muted">The extractor never uses this index. It is for the QC checks.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> the text of every page, to the embedding model.</p>
+      </div>
+    </div>
+
+    <div class="step ex">
+      <div class="step-body">
+        <div class="step-head"><h3>The extractor reads the PDF and answers in JSON</h3><span class="who ex">gpt-4.1</span></div>
+        <p class="kid">The student answers every question, writes the page number and copies the sentence that proves it.</p>
+        <p>Python cuts the PDF into pages 1–40 and 41–60 and sends both pieces to gpt-4.1 at the same time, with the 14 fields and their descriptions. The instructions say: use only what is written, never guess or calculate, copy each value exactly as written, give the original page number and a word-for-word quote under 200 characters, include every line of an address, and return null if a field isn't there. A <b>strict JSON schema</b> forces the same answer shape every time, and <b>temperature 0</b> keeps it as repeatable as possible.</p>
         <div class="pair">
           <figure>
             <figcaption>Sent to gpt-4.1 (shortened)</figcaption>
-<pre>{ <span class="k">"input_file"</span>: <span class="c">policy_p1-40.pdf (the actual file)</span>,
+<pre>{ <span class="k">"input_file"</span>: <span class="c">policy_p1-40.pdf (the file)</span>,
   <span class="k">"text"</span>: "This file is pages 1-40 of a
-           60-page document. Fields to extract:
-   policy_number: Policy number on the
-                  declarations page
-   deductible: Deductible or self-insured
-               retention amount
-   ... 12 more" }</pre>
+    60-page document. Report ORIGINAL
+    page numbers (1-40).
+    Fields to extract:
+    deductible: Deductible or self-
+      insured retention amount (number)
+    ... 13 more" }</pre>
           </figure>
           <figure>
             <figcaption>JSON that comes back (3 of 14 fields)</figcaption>
@@ -359,26 +445,30 @@ footer { color: var(--ink-3); font-size: 14px; }
     "value": null, "page": null } ]</pre>
           </figure>
         </div>
-        <p>The extractor fell for the trap: it took the flood deductible from page 41. It also found no broker. The pages 41–60 call runs at the same time and returns its own answers; for each field Python keeps the most confident non-empty one.</p>
+        <p>The extractor fell for the trap and took the flood deductible from page 41. It also found no broker.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> the PDF file in two pieces, plus the field list.</p>
       </div>
     </div>
 
     <div class="step py">
       <div class="step-body">
-        <div class="step-head"><h3>Python fixes page numbers and runs the self-check</h3><span class="who py">Python</span><span class="who ex">gpt-4.1, only if needed</span></div>
+        <div class="step-head"><h3>Python tidies up the answers</h3><span class="who py">Python</span><span class="who ex">gpt-4.1, only if needed</span></div>
         <p class="kid">Before handing in the test, the student checks every copied sentence is really in the book.</p>
         <ul class="plain">
-          <li><b>Page numbers:</b> AI page numbers can drift by one or two. Python searches for each quote with <b>rapidfuzz</b> (a forgiving Ctrl+F that scores 0–100; 85 or more counts as found). If “Policy No. NSI-CGL-2026-004512” is really on page 2, the page becomes 2, whatever the AI said.</li>
-          <li><b>Self-check:</b> if a quote can't be found anywhere in the document, that field goes back to gpt-4.1 once, with the page's real text and a picture of it. The new answer is kept only if its quote is on the page. In our policy every quote is found, so this step costs nothing.</li>
+          <li><b>Page numbers:</b> AI page numbers can drift. Python looks for each quote, first in that piece's pages, then anywhere. Wherever the quote really is becomes the page number.</li>
+          <li><b>Merge:</b> both pieces return all 14 fields. For each field Python keeps the most confident answer that isn't empty. Line breaks inside a value are joined into one line.</li>
+          <li><b>Self-check:</b> a field whose quote can't be found anywhere goes back to gpt-4.1 once, in one call for all such fields, with the page's real text and a picture of it. The new answer is kept only if its quote is on the page, and the field's notes say a re-read happened. In our policy every quote is found, so this costs nothing.</li>
         </ul>
+        <p class="sends"><b>Sent to OpenAI:</b> usually nothing. Only for a self-check: the text and picture of the cited page.</p>
       </div>
     </div>
 
     <div class="step qc">
       <div class="step-body">
-        <div class="step-head"><h3>One QC agent per field checks the answer</h3><span class="who py">Python</span><span class="who qc">gpt-4o</span></div>
-        <p class="kid">A second teacher, who did not write the answers, opens the book on the page the student named and checks each answer there.</p>
-        <p>All 14 fields are checked at the same time, up to 8 AI calls at once. Each field goes through the same four steps. The next section shows them as a diagram, with what happens to the deductible.</p>
+        <div class="step-head"><h3>One QC check per field</h3><span class="who py">Python</span><span class="who qc">gpt-4o</span><span class="who lo">reranker</span></div>
+        <p class="kid">A second teacher, who did not write the answers, opens the book on the page the student named.</p>
+        <p>All 14 fields are checked at the same time, with up to 8 AI calls running at once. Each check is: Python locates the quote, gpt-4o judges the value on those pages, Python checks gpt-4o's proof, and, at most once, searches for better pages and asks again. <a href="#qc">The next section</a> shows it as a diagram and follows three fields.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> per field, the text and pictures of 1 to 4 pages to gpt-4o, and, only if a search runs, the search question to the embedding model.</p>
       </div>
     </div>
 
@@ -386,25 +476,39 @@ footer { color: var(--ink-3); font-size: 14px; }
       <div class="step-body">
         <div class="step-head"><h3>Rule checks</h3><span class="who py">Python</span></div>
         <p class="kid">Does the answer add up?</p>
-        <p>Python checks that required fields are filled, that numbers are numbers and dates are dates, and the template's sum rule: <code>premium + taxes_and_fees = total_cost</code>. Here ₹4,20,000 + ₹75,600 = ₹4,95,600, so it passes.</p>
+        <ul class="plain">
+          <li>A required field that is empty is flagged.</li>
+          <li>A number field must contain a number, and a date field a real date (day-first dates like 01/04/2026 are accepted).</li>
+          <li>The sum rule: ₹4,20,000 + ₹75,600 = ₹4,95,600, within the ₹1 the template allows. It passes. If it didn't, all three fields would be flagged with the difference.</li>
+        </ul>
+        <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
+      </div>
+    </div>
+
+    <div class="step py">
+      <div class="step-body">
+        <div class="step-head"><h3>The report is saved</h3><span class="who py">Python</span></div>
+        <p>For every field ParseProof saves the status, the extracted and checked values, both quotes, <b>every page each quote appears on</b>, the pages that were read, the notes, and the exact request sent to gpt-4o. It also saves the run's time, the number of AI calls, and the tokens per model, which the app turns into a cost. Everything goes into one database file, <code>data/parseproof.db</code>, on your computer.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
       </div>
     </div>
 
     <div class="step hu">
       <div class="step-body">
         <div class="step-head"><h3>You review, approve and export</h3><span class="who hu">You</span></div>
-        <p class="kid">The head teacher looks only at the answers marked in red or amber.</p>
-        <p>The review screen shows every field with its status, the proof highlighted on the PDF page, and who produced each value. You accept QC's value, keep the extracted one or type your own, then approve and export to Excel, CSV or JSON.</p>
+        <p class="kid">The head teacher looks only at the answers marked red or amber.</p>
+        <p>The review screen shows each field in three labelled steps: what the extractor read (with Python's quote check), what the QC checker said (with Python's proof check and the QC request JSON button), and the final value with where it came from. The PDF page is shown with the proof highlighted. You accept QC's value, keep the extracted one or type your own, then approve and export to Excel, CSV or JSON.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section>
-  <h2>Inside one QC agent</h2>
+<section id="qc">
+  <h2>Inside one QC check</h2>
   <figure>
     <div class="svgwrap">
-      <svg viewBox="0 0 900 520" role="img" aria-label="QC agent for one field. Step 1, Python locate: is the quote on the cited page? If yes, go to step 2. If the quote is nowhere or nothing was extracted, search the index for the best pages, then go to step 2. Step 2, gpt-4o verify reads only those pages. Step 3, Python checks the checker's proof is on the page. If the verdict is wrong or not found, or the proof is fake, search once more and verify again. Step 4 decides Verified, Mismatch or Needs review. If search finds no page at all, the field goes to Needs review with no AI call.">
+      <svg viewBox="0 0 900 520" role="img" aria-label="QC check for one field. Step 1, Python locate: is the quote on the cited page? If yes, go to step 2. If the quote is nowhere or nothing was extracted, search the index for the best pages, then go to step 2. Step 2, gpt-4o verify reads only those pages. Step 3, Python checks the checker's proof is on the page. If the verdict is wrong or not found, or the proof is fake, search once more and verify again. Step 4 decides Verified, Mismatch or Needs review. If search finds no page at all, the field goes to Needs review with no AI call.">
         <defs>
           <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker>
           <marker id="a3l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah loop"/></marker>
@@ -461,63 +565,115 @@ footer { color: var(--ink-3); font-size: 14px; }
         <text x="460" y="478" class="elbl">Needs review, no AI call</text>
       </svg>
     </div>
-    <figcaption>The purple dashed arrow is the only loop, and it runs at most once per field. Grey boxes are Python, the purple box is the only AI in the QC agent.</figcaption>
+    <figcaption>The purple dashed arrow is the only loop, and it runs at most once per field, so a field never costs more than two gpt-4o calls. The search box uses the embedding model for the question and the reranker on your computer.</figcaption>
   </figure>
+
+  <h3>What gpt-4o is told and sent</h3>
+  <div class="pair">
+    <figure>
+      <figcaption>Its rules (shortened)</figcaption>
+<pre><span class="k">"correct"</span>: the pages support the value.
+  Formatting differences are fine
+  (45200 vs 45,200.00).
+<span class="k">"incorrect"</span>: the pages show a different
+  value. Give the correct one.
+<span class="k">"not_found"</span>: these pages don't have it.
+Never calculate. The correct value must
+be in your proof quote. Use the page
+pictures for layout. An address with or
+without a repeated city is "correct".</pre>
+    </figure>
+    <figure>
+      <figcaption>Its message for the deductible</figcaption>
+<pre>Field: deductible
+Description: Deductible or self-insured
+  retention amount
+Type: number
+Extracted value: "₹2,50,000"
+Source pages:
+=== PAGE 41 ===
+<span class="c">(the full text of page 41)</span>
+<span class="c">+ a picture of page 41, 110 dpi</span></pre>
+    </figure>
+  </div>
+  <p class="prose muted">It must reply in JSON: verdict, correct value, proof quote, proof page and reasoning. In the app, the <b>QC request JSON</b> button on every field shows the exact request and reply.</p>
 
   <h3>The policy number: the simple path</h3>
   <ul class="plain">
-    <li><b>Locate (Python):</b> “Policy No. NSI-CGL-2026-004512” is on page 2, score 100. Go to verify with page 2.</li>
-    <li><b>Verify (gpt-4o):</b> reads page 2 only and answers “correct”, with its own proof quote.</li>
-    <li><b>Check the checker (Python):</b> its proof is on page 2. Decide: <span class="pass">Verified</span>.</li>
+    <li><b>Locate (Python):</b> “Policy No. NSI-CGL-2026-004512” is on page 2. Go to verify with page 2.</li>
+    <li><b>Verify (gpt-4o):</b> reads page 2 and answers “correct”, with its own proof quote.</li>
+    <li><b>Check the checker (Python):</b> the proof is on page 2. Decide: <span class="pass">Verified</span>.</li>
   </ul>
-  <p class="muted">One AI call. This is what happens to most fields.</p>
+  <p class="muted">One gpt-4o call, no search. Most fields go this way.</p>
 
-  <h3>The deductible: why the checker AI must run even when the quote is found</h3>
+  <h3>The deductible: why the checker must run even when the quote is found</h3>
   <ol class="plain">
-    <li><b>Locate (Python):</b> “Flood deductible: ₹2,50,000 per occurrence” is on page 41, exactly. Python is satisfied that the sentence is real.</li>
-    <li><b>Verify (gpt-4o), first try:</b> it reads page 41 and sees a flood add-on, not the policy's deductible. Verdict: “not found on these pages”.</li>
-    <li><b>Search once more (Python):</b> the index is asked for “deductible, deductible or self-insured retention amount, ₹2,50,000” and returns pages 2, 7 and 18. The next section shows how.</li>
-    <li><b>Verify (gpt-4o), second try:</b> it reads pages 41, 2, 7 and 18 together and answers “incorrect, the deductible is ₹50,000”, with the proof “Deductible: ₹50,000 each claim” on page 2.</li>
+    <li><b>Locate (Python):</b> “Flood deductible: ₹2,50,000 per occurrence” is on page 41, exactly. The sentence is real.</li>
+    <li><b>Verify (gpt-4o), first try:</b> reads page 41 and sees a flood add-on, not the policy's deductible. Verdict: not found on these pages.</li>
+    <li><b>Search once (Python):</b> the question “deductible · Deductible or self-insured retention amount · ₹2,50,000” returns pages 2, 7 and 18. <a href="#search">How, step by step.</a></li>
+    <li><b>Verify (gpt-4o), second try:</b> reads pages 41, 2, 7 and 18 together and answers “incorrect, it is ₹50,000”, with the proof “Deductible: ₹50,000 each claim” on page 2.</li>
     <li><b>Check the checker (Python):</b> the proof is on page 2, and the digits 50000 are in it. Decide: <span class="fail">Mismatch</span>. The review screen shows ₹2,50,000 crossed out and ₹50,000 suggested, with page 2 highlighted.</li>
   </ol>
   <div class="callout key">
-    <h3>So: Python finding the quote is necessary, not enough</h3>
-    <p>Python proves a sentence <em>exists</em>. Only an AI can tell whether that sentence <em>answers the field</em>. Without the checker, the flood deductible would have gone into your spreadsheet as the policy deductible, with a perfect quote next to it. That is why every field gets a gpt-4o check, and why Python then checks gpt-4o's proof in turn.</p>
+    <h3>Python finding the quote is necessary, not enough</h3>
+    <p>Python proves a sentence <em>exists</em>. Only an AI can tell whether that sentence <em>answers the field</em>. Without the checker, the flood deductible would have gone into the spreadsheet with a perfect quote beside it. So every field gets a gpt-4o check, and Python then checks gpt-4o's proof in turn.</p>
   </div>
 
   <h3>The broker: a field that isn't there</h3>
   <ul class="plain">
     <li><b>Locate (Python):</b> nothing was extracted, so there's no quote to look for. Go straight to search.</li>
-    <li><b>Search:</b> the best 3 pages for “broker name, insurance broker, agent or producer”.</li>
-    <li><b>Verify (gpt-4o):</b> “not found”. Broker is not a required field, so Decide gives <span class="pass">Verified</span>, with the note “Confirmed absent on the pages checked”. If it were required, it would be <span class="rev">Needs review</span>.</li>
+    <li><b>Search:</b> the best 3 pages for “broker name · Insurance broker, agent or producer named on the policy”.</li>
+    <li><b>Verify (gpt-4o):</b> not found. Broker isn't a required field, so Decide gives <span class="pass">Verified</span> with the note “Confirmed absent on the pages checked”. If it were required, it would be <span class="rev">Needs review</span>.</li>
   </ul>
 
+  <h3>How the final status is decided</h3>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>What the checker said</th><th>Is its proof on the page?</th><th>Result</th></tr></thead>
+      <thead><tr><th>What the checker said</th><th>Python's check of its proof</th><th>Result</th></tr></thead>
       <tbody>
-        <tr><td>Correct</td><td>Yes</td><td class="pass">Verified</td></tr>
-        <tr><td>Incorrect, with a corrected value</td><td>Yes, and the value is in the proof</td><td class="fail">Mismatch</td></tr>
-        <tr><td>Incorrect, but the correction has the same words (only a repeated city or PIN removed)</td><td>Yes</td><td class="pass">Verified</td></tr>
-        <tr><td>Not found, and nothing was extracted, and the field isn't required</td><td>No proof needed</td><td class="pass">Verified (confirmed absent)</td></tr>
-        <tr><td>Anything else: fake proof, unsure, required field missing, no page found</td><td>No, or no page</td><td class="rev">Needs review</td></tr>
+        <tr><td>Correct</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
+        <tr><td>Incorrect, with a corrected value</td><td>Proof is on the page, and the corrected value is in the proof (digits must match exactly)</td><td class="fail">Mismatch</td></tr>
+        <tr><td>Incorrect, but the correction has the same words (only a repeated city or PIN dropped)</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
+        <tr><td>Not found, nothing was extracted, and the field isn't required</td><td>No proof needed</td><td class="pass">Verified (confirmed absent)</td></tr>
+        <tr><td>Anything else: fake proof, a correction not in its own proof, a required field missing, no page found</td><td>Failed, or nothing to check</td><td class="rev">Needs review</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
+<section id="python">
+  <h2>How Python checks a quote</h2>
+  <p class="prose">Python's checks are the reason you can trust a quote: an AI could imagine a sentence, Python can't. Before comparing, Python lowercases both texts and squeezes all spaces and line breaks into single spaces. Then a quote counts as found on a page if any one of these is true:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th style="width:26%">Check</th><th>How it works</th><th style="width:30%">Example from the policy</th></tr></thead>
+      <tbody>
+        <tr><td><span class="t">Forgiving Ctrl+F</span><span class="where">rapidfuzz partial_ratio</span></td><td>Finds the closest stretch of the page and scores the match from 0 to 100. <b>85 or more</b> counts as found, which allows odd spacing or a missing comma.</td><td>“Policy No NSI-CGL-2026-004512” matches “Policy No. NSI-CGL-2026-004512” on page 2</td></tr>
+        <tr><td><span class="t">Every piece on the page</span></td><td>For a quote that spans lines the PDF stores apart: split it at commas, and accept it if every piece is on the page and together they cover almost all of the quote.</td><td>A multi-line insured address</td></tr>
+        <tr><td><span class="t">Words in order</span></td><td>All the quote's words appear on the page in the same order, with at most 8 other words between any two. For blocks the PDF mixes with another column. Needs at least 4 words.</td><td>An address whose lines are mixed with “Policy period” lines from the right-hand column</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose">Two more checks are stricter:</p>
+  <ul class="plain">
+    <li><b>Digits must match exactly.</b> When the checker suggests a corrected value, every digit in it must appear in its proof quote. ₹50,000 passes against “Deductible: ₹50,000 each claim”; ₹5,000 would not.</li>
+    <li><b>Same words.</b> If the checker's “correct value” has exactly the same set of words as the extracted value, with at least 4 words, it is the same value and counts as verified. This applies only to text fields, never to numbers or dates.</li>
+  </ul>
+  <p class="prose muted">Python also uses these checks to find <b>every page a quote appears on</b>. A name printed in every page header shows as “Quote found on pages 1, 2, 3, 4” in the review screen, and each page number is a link.</p>
+</section>
+
 <section id="search">
-  <h2>How the search finds the right page</h2>
-  <p class="prose">This is the “RAG” part (Retrieval-Augmented Generation: find the right text first, then give only that to the AI). It only runs when the checker needs other pages. For the deductible, the search question is the field name, its description and the extracted value: <code>deductible · Deductible or self-insured retention amount · ₹2,50,000</code>.</p>
+  <h2>How the search finds pages</h2>
+  <p class="prose">This is the “RAG” part (Retrieval-Augmented Generation: find the right text first, then give only that to the AI). It runs only during a QC check, when the extractor's quote is missing or the checker says the value is wrong or not on its pages. The search question is the field name, its description and the extracted value: <code>deductible · Deductible or self-insured retention amount · ₹2,50,000</code>.</p>
 
   <div class="funnel">
-    <div class="tier"><div class="n">60<small>pages</small></div><p><b>FAISS: search by meaning.</b> The question is turned into 1,536 numbers, the same way every page was. FAISS compares them with all 60 pages and lists the 10 closest in meaning. It finds pages <em>about</em> deductibles even if they use other words, like “self-insured retention”.</p></div>
-    <div class="tier"><div class="n">60<small>pages</small></div><p><b>BM25: search by words.</b> At the same time, every page gets a score for how often it uses the question's words. Rare words count more than common ones, and long pages don't win just by being long. It catches exact things meaning search can miss, like “₹2,50,000”. Top 10 again.</p></div>
-    <div class="tier"><div class="n">≤10<small>pages</small></div><p><b>RRF: merge the two lists.</b> Each list gives a page <code>1 ÷ (60 + its rank)</code> points, and the points are added. A page that is high on both lists rises to the top.</p></div>
-    <div class="tier"><div class="n">3<small>pages</small></div><p><b>Cross-encoder: read carefully.</b> A small AI model running on your own computer (not OpenAI) reads the question and each of those pages side by side and scores how well they match. The best 3 new pages go to the checker.</p></div>
+    <div class="tier"><div class="n">60<small>pages</small></div><p><b>FAISS: search by meaning.</b> The question is sent to <code>text-embedding-3-small</code> and comes back as 1,536 numbers, the same way every page did in step 4. FAISS compares those numbers with all 60 pages' numbers (cosine similarity, on your computer) and lists the 10 closest in meaning. It finds pages <em>about</em> deductibles even if they say “self-insured retention”.</p></div>
+    <div class="tier"><div class="n">60<small>pages</small></div><p><b>BM25: search by words.</b> At the same time, every page gets a score for how often it uses the question's words. Rare words count more than common ones, and long pages don't win just by being long. It catches exact things meaning search can miss, like “₹2,50,000”. Top 10, ignoring pages with no matching word.</p></div>
+    <div class="tier"><div class="n">≤10<small>pages</small></div><p><b>RRF: merge the two lists.</b> Each list gives a page <code>1 ÷ (60 + its rank)</code> points and the points are added. A page high on both lists rises to the top. The best 10 go on.</p></div>
+    <div class="tier"><div class="n">3<small>pages</small></div><p><b>Reranker: read carefully.</b> The small model <code>ms-marco-MiniLM-L-6-v2</code>, running on your computer, reads the question and each page side by side and scores the match. Pages longer than 1,500 characters are read in overlapping windows of 1,500 (300 overlap), and a page's score is its best window. The best 3 pages not already read go to the checker.</p></div>
   </div>
 
-  <h3>The merge, with real numbers</h3>
+  <h3>The merge, with real arithmetic</h3>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Page</th><th>FAISS rank</th><th>BM25 rank</th><th>RRF points</th><th>Why</th></tr></thead>
@@ -530,67 +686,68 @@ footer { color: var(--ink-3); font-size: 14px; }
       </tbody>
     </table>
   </div>
-  <p class="prose muted">The 60 in the formula stops one list from shouting over the other: being 1st instead of 2nd is worth only a little, being on both lists is worth a lot. Notice that the real answer, page 2, is only third here. The next step fixes that.</p>
+  <p class="prose muted">The 60 stops one list from shouting over the other: being 1st instead of 2nd is worth little, being on both lists is worth a lot. The real answer, page 2, is only third here. The reranker fixes that.</p>
 
   <h3>The rerank, with example scores</h3>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Page</th><th>Cross-encoder score</th><th>What it noticed, reading the question and page together</th></tr></thead>
+      <thead><tr><th>Page</th><th>Score</th><th>What it noticed, reading the question and page together</th></tr></thead>
       <tbody>
         <tr class="win"><td class="num">2</td><td class="num">7.9</td><td>“Deductible: ₹50,000 each claim” directly answers “deductible amount”</td></tr>
-        <tr><td class="num">41</td><td class="num">6.1</td><td>A deductible amount, but for flood only</td></tr>
+        <tr><td class="num">41</td><td class="num">6.1</td><td>A deductible amount, but for flood only. Already read, so skipped.</td></tr>
         <tr class="win"><td class="num">7</td><td class="num">3.2</td><td>About deductibles, no amount</td></tr>
         <tr class="win"><td class="num">18</td><td class="num">−1.4</td><td>Weak match</td></tr>
         <tr><td class="num">22</td><td class="num">−3.0</td><td>Weak match</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">Scores are made up to show the idea. Page 41 was already checked, so the 3 new pages are 2, 7 and 18, and the checker reads them together with 41. Long pages are read in windows of 1,500 characters (overlapping by 300), and a page's score is its best window.</p>
+  <p class="prose muted">The scores are made up to show the idea. The checker now reads page 41 again together with the 3 new pages: 2, 7 and 18.</p>
 
   <div class="compare">
-    <div class="callout"><span class="tag">Why not only FAISS and BM25?</span><p>They are fast but rough. Each makes its fingerprint of the question and the page separately, so neither ever reads them together.</p></div>
-    <div class="callout"><span class="tag">Why not only the cross-encoder?</span><p>It is the most accurate but the slowest. Reading 10 pages is quick; reading all 60 for every search would not be. So FAISS and BM25 pick 10, and the cross-encoder picks 3.</p></div>
+    <div class="callout"><span class="tag">Why not only FAISS and BM25?</span><p>They are fast but rough. Each makes its fingerprint of the question and of the page separately, so neither ever reads them together.</p></div>
+    <div class="callout"><span class="tag">Why not only the reranker?</span><p>It is the most accurate and the slowest. Reading 10 pages is quick; reading all 60 for every search is not. So FAISS and BM25 pick 10 and the reranker picks 3.</p></div>
   </div>
 </section>
 
-<section>
-  <h2>Exactly what each AI receives</h2>
+<section id="data">
+  <h2>What is sent to OpenAI</h2>
+  <p class="prose">Everything else stays on your computer: the uploaded file, the page text, the index, the database and your review decisions. This is the complete list of what leaves it:</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:22%">AI</th><th style="width:40%">It receives</th><th>It sends back</th></tr></thead>
+      <thead><tr><th style="width:26%">Step</th><th style="width:22%">Model</th><th>What is sent</th><th style="width:14%">How often</th></tr></thead>
       <tbody>
-        <tr><td><span class="t">gpt-4.1</span><span class="where">extractor</span></td><td>The PDF file (up to 40 pages per call) and the field list. For Excel or Word: Python's text instead of the file.</td><td>JSON: value, page, quote and confidence for every field</td></tr>
-        <tr><td><span class="t">gpt-4.1</span><span class="where">self-check, rare</span></td><td>Only fields whose quote wasn't in the document, with that page's text and picture</td><td>The same JSON for those fields</td></tr>
-        <tr><td><span class="t">gpt-4o</span><span class="where">checker, once or twice per field</span></td><td>The rules, one field's name, description and extracted value, the text of 1 to 4 pages, and pictures of those pages. Never the whole document.</td><td>JSON: verdict, correct value, proof quote, proof page, reasoning</td></tr>
-        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">OCR, scans only</span></td><td>A picture of one scanned page</td><td>The words on it, as plain text</td></tr>
-        <tr><td><span class="t">text-embedding-3-small</span><span class="where">index and search</span></td><td>The text of each page once, then each search question</td><td>1,536 numbers per text</td></tr>
-        <tr><td><span class="t">ms-marco-MiniLM-L-6-v2</span><span class="where">reranker, on your computer</span></td><td>The search question and up to 10 pages</td><td>A match score per page. Free, no OpenAI call.</td></tr>
+        <tr><td>OCR</td><td><code>gpt-4.1-mini</code></td><td>A picture of each scanned page</td><td>First run of a file</td></tr>
+        <tr><td>Building the index</td><td><code>text-embedding-3-small</code></td><td>The text of <b>every page</b>, up to 24,000 characters each</td><td>First run of a file</td></tr>
+        <tr><td>Extraction</td><td><code>gpt-4.1</code></td><td>The PDF file in pieces of up to 40 pages, or Python's text for Excel/Word/CSV, plus the field list</td><td>Every run</td></tr>
+        <tr><td>Self-check</td><td><code>gpt-4.1</code></td><td>The text and picture of a page whose quote wasn't found</td><td>Rarely</td></tr>
+        <tr><td>QC check</td><td><code>gpt-4o</code></td><td>One field's name, description and value, with the text and pictures of 1 to 4 pages</td><td>Once or twice per field</td></tr>
+        <tr><td>QC search</td><td><code>text-embedding-3-small</code></td><td>The search question (field name, description, extracted value)</td><td>Only when a search runs</td></tr>
+        <tr><td>Create with AI (templates)</td><td><code>gpt-4.1</code></td><td>Your description, and the first 30 pages of a sample document if you attach one</td><td>Only when you use it</td></tr>
+        <tr><td>Settings → test key</td><td>none</td><td>Asks OpenAI for its list of models, to check the key works. No document data.</td><td>When you click it</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose">In the app, every field has a <b>QC request JSON</b> button that shows the exact request sent to gpt-4o and its reply.</p>
+  <p class="prose muted">How long OpenAI keeps API data and whether it is used for training is set by OpenAI's own API data policy and your account settings; check those before using real customer documents. The reranker never sends anything anywhere.</p>
 </section>
 
 <section id="cost">
-  <h2>The models we use, and what they cost</h2>
-  <p class="prose">OpenAI charges per <b>token</b>, a small piece of text about three quarters of a word long. A page picture is also counted as tokens. You pay separately for what you send in (<b>input</b>) and what the model writes back (<b>output</b>); output costs four times as much, but answers here are short, so most of the bill is input.</p>
+  <h2>What it costs</h2>
+  <p class="prose">OpenAI charges per <b>token</b>, a piece of text about three quarters of a word long. A page picture is also counted in tokens. You pay for what you send (<b>input</b>) and what the model writes back (<b>output</b>); output costs four times as much, but answers here are short, so most of the bill is input.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:24%">Job in ParseProof</th><th>Model</th><th>Input · per 1M tokens</th><th>Output · per 1M tokens</th><th>Why this model</th></tr></thead>
+      <thead><tr><th style="width:24%">Job</th><th>Model</th><th>Input · per 1M tokens</th><th>Output · per 1M tokens</th><th>Why this model</th></tr></thead>
       <tbody>
-        <tr><td>Extract every field</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>Reads PDF files directly; read page numbers correctly in our tests where gpt-4o didn't</td></tr>
-        <tr><td>Self-check (rare)</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>The same model re-reads its own mistake</td></tr>
+        <tr><td>Extraction, self-check, templates</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>Reads PDF files directly; read page numbers correctly in our tests where gpt-4o didn't</td></tr>
         <tr><td>QC checker</td><td><code>gpt-4o</code></td><td class="num">$2.50</td><td class="num">$10.00</td><td>A different model from the extractor, so it doesn't share its blind spots</td></tr>
-        <tr><td>OCR of scanned pages</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>Typing out a page is easy work, so the cheap model is enough</td></tr>
-        <tr><td>Embeddings for search</td><td><code>text-embedding-3-small</code></td><td class="num">$0.02</td><td class="num">—</td><td>Almost free: a whole 60-page document costs a fraction of a cent</td></tr>
-        <tr><td>Reranker</td><td><code>ms-marco-MiniLM-L-6-v2</code></td><td class="num">free</td><td class="num">free</td><td>Runs on your own computer, no OpenAI call</td></tr>
+        <tr><td>OCR</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>Typing out a page is easy work</td></tr>
+        <tr><td>Embeddings</td><td><code>text-embedding-3-small</code></td><td class="num">$0.02</td><td class="num">—</td><td>Almost free: all 60 pages cost a fraction of a cent</td></tr>
+        <tr><td>Reranker</td><td><code>ms-marco-MiniLM-L-6-v2</code></td><td class="num">free</td><td class="num">free</td><td>Runs on your computer</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">OpenAI's standard prices as listed on <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; check that page before quoting a budget. All models can be changed under Settings in the app.</p>
+  <p class="prose muted">OpenAI's standard prices from <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; the app reads them from <code>PRICES</code> in <code>config.py</code>.</p>
 
   <h3>What real runs cost</h3>
-  <p class="prose">Measured from the token counts the app records for every run, multiplied by the prices above:</p>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Document</th><th>Fields</th><th>gpt-4.1 · extract</th><th>gpt-4o · QC</th><th>Embeddings</th><th>Total</th></tr></thead>
@@ -601,86 +758,136 @@ footer { color: var(--ink-3); font-size: 14px; }
     </table>
   </div>
   <div class="callout key">
-    <h3>The checker is about 85% of the bill</h3>
-    <p>Each field's check sends whole pages of text plus pictures of them, and there is one check per field (two when it has to search again). The extractor reads the document once. So the cost grows mostly with the <b>number of fields</b>, and with how full the pages are.</p>
+    <h3>The QC checker is about 85% of the bill</h3>
+    <p>Each field's check sends whole pages of text plus pictures of them, and there is one check per field (two when it searches). The extractor reads the document once. So cost grows mostly with the <b>number of fields</b>. These two runs show tiny embedding costs because their index already existed or the documents are short.</p>
   </div>
 
   <h3>A rough estimate for the 60-page policy</h3>
-  <p class="prose">From the two runs above, extraction costs about $0.005 to $0.009 per page and each field's check about $0.006 to $0.013. For our 60-page policy with 14 fields:</p>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Part</th><th>How it's worked out</th><th>Estimate</th></tr></thead>
       <tbody>
-        <tr><td>Extraction</td><td class="num">60 pages × $0.005–0.009</td><td class="num">$0.30–0.54</td></tr>
+        <tr><td>Extraction</td><td class="num">60 pages × $0.005–0.009 per page</td><td class="num">$0.30–0.54</td></tr>
         <tr><td>QC</td><td class="num">14 fields × $0.006–0.013, plus a few second checks</td><td class="num">$0.10–0.25</td></tr>
-        <tr><td>OCR (1 scanned page) and embeddings</td><td class="num">gpt-4.1-mini and text-embedding-3-small</td><td class="num">under $0.01</td></tr>
-        <tr><td><b>Total for one run</b></td><td></td><td class="num"><b>about $0.40–0.80</b></td></tr>
+        <tr><td>OCR (1 page) and embeddings (60 pages)</td><td class="num">gpt-4.1-mini and text-embedding-3-small</td><td class="num">under $0.01</td></tr>
+        <tr><td><b>One run</b></td><td></td><td class="num"><b>about $0.40–0.80</b></td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">This is an estimate, not a measurement: real pages vary a lot in how much text they hold. Run one document and read the exact token count in the run header (click it for the split per model). A re-run of the same file skips the embeddings and OCR, because the index is saved.</p>
+  <p class="prose muted">An estimate, not a measurement: pages vary a lot in how much text they hold. The app shows the exact tokens and cost of every run in the run header (click it for each model) and in the Runs list, and the Excel export has a Cost (USD) column. The cost of Create with AI template drafting isn't included in run totals.</p>
 
   <h3>If cost matters</h3>
   <ul class="plain">
-    <li><b>Use a cheaper checker:</b> set the QC model to <code>gpt-4.1-mini</code> under Settings. Its input price is $0.40 instead of $2.50, so the QC part costs about a sixth. Test it on a few known documents first, because a weaker checker can miss more.</li>
-    <li><b>Ask for fewer fields:</b> every field is one check. A 6-field template costs about half as much to check as a 14-field one.</li>
-    <li><b>Split very long documents:</b> if you only need the first 10 pages of a 200-page contract, upload those pages.</li>
+    <li><b>A cheaper checker:</b> set the QC model to <code>gpt-4.1-mini</code> under Settings. Its input price is about a sixth of gpt-4o's. Test it on known documents first; a weaker checker can miss more.</li>
+    <li><b>Fewer fields:</b> each field is one check.</li>
+    <li><b>Fewer pages:</b> if you only need the first 10 pages of a 200-page contract, upload those.</li>
   </ul>
 </section>
 
-<section>
-  <h2>Who does what</h2>
+<section id="agents">
+  <h2>Is this an AI agent?</h2>
+  <p class="prose">Strictly, no. An AI <b>agent</b> is a model that decides its own next step in a loop: it picks a tool, looks at the result, and decides again until it thinks it's done. ParseProof is an AI <b>workflow</b>: the steps are fixed in code, the AI does a job inside a step, and the code decides what happens next. The code calls the parts “the extraction agent” and “the QC agent”, but that is a loose name.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:30%">Job</th><th style="width:22%">Who</th><th>Why that choice</th></tr></thead>
+      <thead><tr><th style="width:30%">Part</th><th>Who decides the next step</th></tr></thead>
       <tbody>
-        <tr><td>Read the document and find all answers</td><td><span class="who ex">gpt-4.1</span></td><td>Understands tables, layouts and wording; sees the page pictures</td></tr>
-        <tr><td>Read page text, OCR scans, build the index</td><td><span class="who py">Python</span> + small OpenAI calls</td><td>Fast, done once per file, saved</td></tr>
-        <tr><td>Check a quote is on a page</td><td><span class="who py">Python</span></td><td>Certain and free. An AI could imagine a quote; Python can't.</td></tr>
-        <tr><td>Find the right pages to check</td><td><span class="who py">Python</span> + local reranker</td><td>Sends 1–4 pages to the checker instead of 60</td></tr>
-        <tr><td>Decide if a value answers the field</td><td><span class="who qc">gpt-4o</span></td><td>Needs understanding. A different model from the extractor, so it doesn't share its blind spots.</td></tr>
-        <tr><td>Check the checker's proof and the digits</td><td><span class="who py">Python</span></td><td>The checker AI can be wrong too</td></tr>
-        <tr><td>Sums, dates, required fields</td><td><span class="who py">Python</span></td><td>Plain rules, no guessing</td></tr>
-        <tr><td>Final decision on flagged fields</td><td><span class="who hu">You</span></td><td>Only the red and amber ones, with the proof on screen</td></tr>
+        <tr><td>Extraction</td><td>The code: one call per 40 pages</td></tr>
+        <tr><td>Self-check</td><td>The code: only when Python can't find a quote</td></tr>
+        <tr><td>QC check</td><td>The code: locate, verify, search again only if the verdict is wrong or not found, then decide. gpt-4o judges; Python reads its answer and steers.</td></tr>
+        <tr><td>Search, rules, export</td><td>Plain code</td></tr>
       </tbody>
     </table>
   </div>
+  <p class="prose"><b>LangGraph</b>, the library that runs it, is often used to build agents; here it wires a fixed workflow with branches and parallel steps. That choice keeps cost predictable (at most two checker calls per field), makes every field auditable (same steps every time, all shown on screen), and keeps runs repeatable. A one-line description: <em>ParseProof is an AI workflow built with LangGraph: one AI extracts, a second AI checks each field on its source page, and Python verifies both of them.</em></p>
 </section>
 
-<section>
-  <h2>Every technology, in one line each</h2>
+<section id="numbers">
+  <h2>Every number and limit</h2>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:26%">Technology</th><th>What it does here</th></tr></thead>
+      <thead><tr><th style="width:44%">Setting</th><th style="width:18%">Value</th><th>Where it matters</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="3">Upload and reading</td></tr>
+        <tr><td>File types</td><td class="num">PDF, DOCX, XLSX, XLS, CSV, TXT</td><td>Others are refused at upload</td></tr>
+        <tr><td>Largest upload</td><td class="num">100 MB</td><td>Upload</td></tr>
+        <tr><td>Text below which a PDF page counts as scanned</td><td class="num">25 characters</td><td>Decides which pages get OCR</td></tr>
+        <tr><td>OCR picture sharpness</td><td class="num">150 dpi</td><td>OCR</td></tr>
+        <tr class="group"><td colspan="3">Index and search</td></tr>
+        <tr><td>Numbers per page from the embedding model</td><td class="num">1,536</td><td>FAISS</td></tr>
+        <tr><td>Pages per embedding call</td><td class="num">8</td><td>Building the index</td></tr>
+        <tr><td>Text per page sent for embedding</td><td class="num">first 24,000 characters</td><td>Building the index</td></tr>
+        <tr><td>Pages from FAISS and from BM25</td><td class="num">10 each</td><td>Search</td></tr>
+        <tr><td>RRF constant</td><td class="num">60</td><td>Merge</td></tr>
+        <tr><td>Reranker window</td><td class="num">1,500 characters, 300 overlap</td><td>Rerank</td></tr>
+        <tr><td>New pages sent to the checker after a search</td><td class="num">3</td><td>QC</td></tr>
+        <tr class="group"><td colspan="3">Extraction</td></tr>
+        <tr><td>PDF pages per extraction call</td><td class="num">40</td><td>Bigger PDFs are split and sent at the same time</td></tr>
+        <tr><td>Text per call for Excel, Word, CSV</td><td class="num">40,000 characters</td><td>Extraction</td></tr>
+        <tr><td>Quote length asked for</td><td class="num">under 200 characters</td><td>Extraction</td></tr>
+        <tr><td>Temperature</td><td class="num">0</td><td>All calls during a run (template drafting uses 0.2)</td></tr>
+        <tr class="group"><td colspan="3">Checking</td></tr>
+        <tr><td>Fuzzy match needed for a quote</td><td class="num">85 out of 100</td><td>All Python quote checks</td></tr>
+        <tr><td>Most other words allowed between quote words</td><td class="num">8</td><td>Words-in-order check</td></tr>
+        <tr><td>Fewest words for words-in-order and same-words</td><td class="num">4</td><td>Python checks</td></tr>
+        <tr><td>Page pictures per QC call</td><td class="num">up to 4, at 110 dpi</td><td>QC</td></tr>
+        <tr><td>gpt-4o calls per field</td><td class="num">1, at most 2</td><td>QC</td></tr>
+        <tr><td>Sum rule tolerance</td><td class="num">as set in the template (₹1 for insurance)</td><td>Rule checks</td></tr>
+        <tr class="group"><td colspan="3">Speed</td></tr>
+        <tr><td>AI calls at the same time, inside one document</td><td class="num">8</td><td>OCR, extraction pieces, QC checks</td></tr>
+        <tr><td>Documents of a batch at the same time</td><td class="num">3</td><td>Batches</td></tr>
+        <tr><td>OpenAI time limit</td><td class="num">240 s per extraction call, 60 s for others</td><td>The OpenAI library retries a failed call up to 3 times (connection errors, rate limits, server errors)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">The models, pages per call, parallel calls and batch size can be changed in <code>.env</code>; the models also under Settings.</p>
+</section>
+
+<section id="tech">
+  <h2>Every technology</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th style="width:28%">Technology</th><th>What it does here</th></tr></thead>
       <tbody>
         <tr class="group"><td colspan="2">AI</td></tr>
-        <tr><td><span class="t">OpenAI Responses API</span><span class="where">openai_extract.py</span></td><td>How the PDF file is sent to gpt-4.1, with a strict JSON schema so every answer has the same shape</td></tr>
-        <tr><td><span class="t">Temperature 0</span></td><td>Tells the models to always pick their most likely answer, so runs are as repeatable as possible</td></tr>
-        <tr><td><span class="t">Embeddings</span><span class="where">text-embedding-3-small</span></td><td>Turn text into 1,536 numbers that capture its meaning, for FAISS</td></tr>
-        <tr class="group"><td colspan="2">Search (RAG)</td></tr>
-        <tr><td><span class="t">FAISS</span><span class="where">doc_index.py</span></td><td>Finds the pages closest in meaning to a question, by comparing their numbers</td></tr>
-        <tr><td><span class="t">BM25</span><span class="where">rank_bm25</span></td><td>Finds the pages that use the question's words, with rare words counting more</td></tr>
-        <tr><td><span class="t">RRF merge</span></td><td>Adds up <code>1 ÷ (60 + rank)</code> from both lists into one list</td></tr>
-        <tr><td><span class="t">Cross-encoder reranker</span><span class="where">sentence-transformers</span></td><td>A small local model that reads question and page together and picks the best 3</td></tr>
-        <tr><td><span class="t">rapidfuzz</span></td><td>Forgiving Ctrl+F: scores how closely a quote matches a page, from 0 to 100. Also accepts a quote whose words are in order with another column's words mixed in.</td></tr>
-        <tr class="group"><td colspan="2">Workflow and app</td></tr>
-        <tr><td><span class="t">LangGraph</span><span class="where">agents.py</span></td><td>Runs the steps as boxes and arrows: extraction pieces in parallel, one QC agent per field in parallel, the one retry loop</td></tr>
-        <tr><td><span class="t">PyMuPDF</span></td><td>Reads page text, splits big PDFs into 40-page pieces, draws page pictures for the checker</td></tr>
-        <tr><td><span class="t">pandas, python-docx</span></td><td>Turn Excel, CSV and Word files into text</td></tr>
-        <tr><td><span class="t">FastAPI + SQLite</span><span class="where">server.py · db.py</span></td><td>The server and the one-file database for documents, templates, runs and settings</td></tr>
-        <tr><td><span class="t">React + Vite + Tailwind</span><span class="where">web/</span></td><td>The screens. react-pdf shows the PDF and highlights the proof.</td></tr>
-        <tr><td><span class="t">openpyxl</span><span class="where">exports.py</span></td><td>Builds the Excel export with coloured cells and proof comments</td></tr>
+        <tr><td><span class="t">OpenAI Python SDK</span><span class="where">openai</span></td><td>Every call to OpenAI: the Responses API for extraction, OCR and templates (it accepts PDF files), Chat Completions for QC and the self-check, and the Embeddings API</td></tr>
+        <tr><td><span class="t">Strict JSON schema</span></td><td>Forces the extractor's answer into exactly name, value, page, quote and confidence for each field</td></tr>
+        <tr><td><span class="t">sentence-transformers + PyTorch</span></td><td>Run the reranker model on your computer. PyTorch is the largest package to install.</td></tr>
+        <tr class="group"><td colspan="2">Search</td></tr>
+        <tr><td><span class="t">FAISS</span><span class="where">faiss-cpu</span></td><td>Stores each page's 1,536 numbers and finds the closest ones to a question</td></tr>
+        <tr><td><span class="t">BM25</span><span class="where">rank-bm25</span></td><td>Scores pages by the question's words, with rare words counting more</td></tr>
+        <tr><td><span class="t">RRF</span></td><td>A few lines of our own code that merge the FAISS and BM25 lists</td></tr>
+        <tr><td><span class="t">rapidfuzz</span></td><td>Forgiving text matching, used in every Python quote check</td></tr>
+        <tr><td><span class="t">NumPy</span></td><td>Handles the lists of numbers</td></tr>
+        <tr class="group"><td colspan="2">Workflow</td></tr>
+        <tr><td><span class="t">LangGraph</span></td><td>Runs the steps as boxes and arrows: extraction pieces in parallel, one QC check per field in parallel, the one retry loop</td></tr>
+        <tr class="group"><td colspan="2">Reading files</td></tr>
+        <tr><td><span class="t">PyMuPDF</span></td><td>Reads page text, cuts PDFs into 40-page pieces, draws page pictures for OCR and QC, checks for passwords</td></tr>
+        <tr><td><span class="t">pandas, openpyxl, python-docx</span></td><td>Read Excel, CSV and Word files; pandas also checks dates</td></tr>
+        <tr class="group"><td colspan="2">App</td></tr>
+        <tr><td><span class="t">FastAPI + uvicorn</span></td><td>The server on port 8010 that the screens talk to</td></tr>
+        <tr><td><span class="t">SQLite</span></td><td>One database file, <code>data/parseproof.db</code>: documents, templates, runs, batches, decisions, settings</td></tr>
+        <tr><td><span class="t">python-dotenv</span></td><td>Reads the OpenAI key and settings from <code>.env</code></td></tr>
+        <tr><td><span class="t">openpyxl</span></td><td>Builds the Excel export with coloured cells and proof comments</td></tr>
+        <tr><td><span class="t">React, TypeScript, Vite, Tailwind CSS</span></td><td>The screens, and the tool that builds them</td></tr>
+        <tr><td><span class="t">react-pdf (pdf.js)</span></td><td>Shows the PDF in the review screen and highlights the proof</td></tr>
+        <tr><td><span class="t">TanStack Query</span></td><td>Fetches data from the server and keeps the progress bar moving</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
-<section>
-  <h2>Why answers can differ between two runs</h2>
-  <p class="prose">An AI writes its answer one small piece at a time and picks the most likely next piece. When two choices are almost tied, tiny differences on OpenAI's servers can tip it either way, even at temperature 0. That's why ParseProof never trusts one AI alone: the self-check, the second AI and Python's proof checks are there to catch a slip before it reaches your spreadsheet.</p>
+<section id="faq">
+  <h2>More questions people ask</h2>
+  <div class="callout"><h3>Why do two runs of the same document sometimes give different answers?</h3><p>An AI writes its answer one small piece at a time and takes the most likely next piece. When two choices are almost tied, tiny differences on OpenAI's servers can tip it either way, even at temperature 0. No setting makes any AI model 100% repeatable. The self-check, the second AI and Python's proof checks are there to catch a slip before it reaches your spreadsheet.</p></div>
+  <div class="callout"><h3>Can it still be wrong?</h3><p>Yes, mainly when both AIs make the same mistake and the proof is a real sentence. That is rarer because they are different models and the checker reads only the relevant pages. Anything uncertain is marked Needs review rather than guessed.</p></div>
+  <div class="callout"><h3>Does it work on scans and photos?</h3><p>Yes. The extractor reads the page pictures in the PDF, and OCR makes the scanned pages searchable for QC. Scanned pages have no text layer in the viewer, so the proof shows as a quote in the field panel instead of a highlight on the page.</p></div>
+  <div class="callout"><h3>Can it read tables with many rows, like every line item or every claim?</h3><p>Not yet. Each field is one value. For repeating data, use summary fields that are written on the document, such as totals, counts or the largest item.</p></div>
+  <div class="callout"><h3>What about password-protected PDFs?</h3><p>They are refused at upload with a clear message. Open the PDF, print it to a new PDF (Print → Save as PDF) and upload that copy.</p></div>
+  <div class="callout"><h3>Where is our data stored?</h3><p>On the computer running ParseProof: files in <code>data/documents/</code>, indexes in <code>data/indexes/</code>, everything else in <code>data/parseproof.db</code>. None of it is in the GitHub repository. What goes to OpenAI is listed in <a href="#data">What is sent to OpenAI</a>.</p></div>
+  <div class="callout"><h3>Can we use other models?</h3><p>Yes, under Settings: any OpenAI model for extraction, QC and OCR. Add its price to <code>PRICES</code> in <code>config.py</code> so the cost shows; a model without a price is left out of the total, and the app says so.</p></div>
 </section>
 
 <hr>
-<footer>ParseProof · runs locally at 127.0.0.1:8010 · github.com/ashwin-iitm/ParseProof · the insurer, customer and numbers on this page are made up</footer>
+<footer>ParseProof · runs locally at 127.0.0.1:8010 · github.com/ashwin-iitm/ParseProof · the insurer, customer and numbers in the policy example are made up</footer>
 
 </main>
