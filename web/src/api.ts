@@ -210,9 +210,19 @@ export interface Run extends Omit<RunListItem, "summary" | "seconds" | "tokens" 
   resolved: { field: string; value: string | null; reviewed: boolean; source: string }[];
 }
 
+export interface PriceRow {
+  model: string;
+  input: number;
+  output: number;
+  kind?: "chat" | "embedding" | "local";
+}
+
 export interface Settings {
   openai_key_set: boolean;
   openai_key_hint: string;
+  prices: PriceRow[];
+  default_prices: PriceRow[];
+  prices_source: string;
   models: { extract: string; qc: string; ocr: string };
   defaults: { extract: string; qc: string; ocr: string };
 }
@@ -285,6 +295,6 @@ export const api = {
     request<TemplateDraft>("/api/templates/draft", json("POST", { prompt, document_id: document_id || null })),
 
   settings: () => request<Settings>("/api/settings"),
-  saveSettings: (s: Record<string, string>) => request<Settings>("/api/settings", json("PUT", s)),
+  saveSettings: (s: Record<string, unknown>) => request<Settings>("/api/settings", json("PUT", s)),
   testSettings: () => request<{ ok: boolean; error?: string; model_available?: boolean | null }>("/api/settings/test", { method: "POST" }),
 };

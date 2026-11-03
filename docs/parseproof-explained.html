@@ -746,7 +746,7 @@ Source pages:
       </tbody>
     </table>
   </div>
-  <p class="prose muted">OpenAI's standard prices from <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; the app reads them from <code>PRICES</code> in <code>config.py</code>.</p>
+  <p class="prose muted">OpenAI's standard prices from <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; you can edit them in the app under Settings → Model prices.</p>
 
   <h3>What real runs cost</h3>
   <p class="prose">Measured from the token counts the app records, multiplied by the prices above. Both documents were run with each checker:</p>
@@ -889,7 +889,7 @@ Source pages:
   <div class="callout"><h3>Can it read tables with many rows, like every line item or every claim?</h3><p>Not yet. Each field is one value. For repeating data, use summary fields that are written on the document, such as totals, counts or the largest item.</p></div>
   <div class="callout"><h3>What about password-protected PDFs?</h3><p>They are refused at upload with a clear message. Open the PDF, print it to a new PDF (Print → Save as PDF) and upload that copy.</p></div>
   <div class="callout"><h3>Where is our data stored?</h3><p>On the computer running ParseProof: files in <code>data/documents/</code>, indexes in <code>data/indexes/</code>, everything else in <code>data/parseproof.db</code>. None of it is in the GitHub repository. What goes to OpenAI is listed in <a href="#data">What is sent to OpenAI</a>.</p></div>
-  <div class="callout"><h3>Can we use other models?</h3><p>Yes, under Settings: any OpenAI model for extraction, QC and OCR. Add its price to <code>PRICES</code> in <code>config.py</code> so the cost shows; a model without a price is left out of the total, and the app says so.</p></div>
+  <div class="callout"><h3>Can we use other models?</h3><p>Yes. Under Settings → Model prices, add the model with its input and output price; it then appears in the pickers for extraction, QC and OCR. A model without a price is left out of the cost total, and the app says so.</p></div>
 </section>
 
 <hr>

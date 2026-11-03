@@ -55,6 +55,9 @@ jobs = ThreadPoolExecutor(max_workers=RUN_CONCURRENCY, thread_name_prefix="run")
 @app.on_event("startup")
 def startup() -> None:
     db.init()
+    saved_prices = db.get_settings().get("prices")
+    if saved_prices:
+        config.set_prices(json.loads(saved_prices))
     db.fail_interrupted_runs()
     # Add starter templates once each, so new ones appear but deleted ones don't come back
     seeded = set(json.loads(db.get_settings().get("seeded_templates") or "[]"))
@@ -81,11 +84,27 @@ def key_configured() -> bool:
     return bool(config.OPENAI_API_KEY)
 
 
+class PriceIn(BaseModel):
+    model: str
+    input: float
+    output: float
+
+
 class SettingsIn(BaseModel):
     openai_api_key: Optional[str] = None
     extract_model: Optional[str] = None
     qc_model: Optional[str] = None
     ocr_model: Optional[str] = None
+    prices: Optional[List[PriceIn]] = None
+    reset_prices: Optional[bool] = None
+
+
+def price_rows(prices: Dict[str, dict]) -> List[Dict[str, Any]]:
+    """Chat models first (the ones you pick below), then the embedding model and the local reranker."""
+    def kind(name: str) -> str:
+        return "local" if name in config.LOCAL_MODELS else "embedding" if name == config.EMBED_MODEL else "chat"
+    rows = [{"model": k, "input": v["input"], "output": v["output"], "kind": kind(k)} for k, v in prices.items()]
+    return sorted(rows, key=lambda r: ({"chat": 0, "embedding": 1, "local": 2}[r["kind"]], r["model"]))
 
 
 @app.get("/api/settings")
@@ -96,6 +115,9 @@ def get_settings():
         "openai_key_hint": f"{key[:7]}…{key[-4:]}" if len(key) > 12 else "",
         "models": current_models(),
         "defaults": default_models(),
+        "prices": price_rows(config.PRICES),
+        "default_prices": price_rows(config.DEFAULT_PRICES),
+        "prices_source": config.PRICES_SOURCE,
     }
 
 
@@ -111,6 +133,22 @@ def put_settings(body: SettingsIn):
         value = getattr(body, f"{name}_model")
         if value is not None:
             db.set_setting(f"{name}_model", value.strip())
+    if body.reset_prices:
+        db.set_setting("prices", "")
+        config.set_prices({k: v for k, v in config.DEFAULT_PRICES.items()}, edited=False)
+    elif body.prices is not None:
+        prices: Dict[str, dict] = {}
+        for p in body.prices:
+            name = p.model.strip()
+            if not name:
+                raise HTTPException(400, "Every price row needs a model name.")
+            if name in prices:
+                raise HTTPException(400, f"{name} is listed twice.")
+            if p.input < 0 or p.output < 0:
+                raise HTTPException(400, f"Prices for {name} can't be negative.")
+            prices[name] = {"input": p.input, "output": p.output}
+        db.set_setting("prices", json.dumps(prices))
+        config.set_prices(prices)
     return get_settings()
 
 

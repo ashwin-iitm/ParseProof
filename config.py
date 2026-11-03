@@ -134,10 +134,11 @@ def record_local(model: str, seconds: float, step: str, detail: Optional[str] = 
 # -----------------------------
 # PRICES (USD per 1M tokens, OpenAI standard tier)
 # -----------------------------
-# From https://developers.openai.com/api/docs/pricing on 2026-11-03. Update here when OpenAI
-# changes them; costs are worked out when a run is shown, so old runs use the new prices too.
+# Defaults from https://developers.openai.com/api/docs/pricing on 2026-11-03. The list can be
+# edited under Settings (saved in the database); costs are worked out when a run is shown, so
+# old runs use the new prices too.
 PRICES_CHECKED = "2026-11-03"
-PRICES = {
+DEFAULT_PRICES = {
     "gpt-4.1": {"input": 2.00, "output": 8.00},
     "gpt-4.1-mini": {"input": 0.40, "output": 1.60},
     "gpt-4o": {"input": 2.50, "output": 10.00},
@@ -146,6 +147,21 @@ PRICES = {
     RERANKER_MODEL: {"input": 0.0, "output": 0.0},
 }
 LOCAL_MODELS = {RERANKER_MODEL}
+PRICES = {k: dict(v) for k, v in DEFAULT_PRICES.items()}
+PRICES_SOURCE = f"OpenAI's standard prices, checked {PRICES_CHECKED}"
+
+
+def set_prices(prices: dict, edited: bool = True) -> None:
+    """Replace the price list in place (other modules hold a reference to PRICES). The embedding
+    model and the local reranker always stay in it, because every run uses them."""
+    global PRICES_SOURCE
+    fixed = {k: dict(DEFAULT_PRICES[k]) for k in (EMBED_MODEL, RERANKER_MODEL) if k in DEFAULT_PRICES}
+    PRICES.clear()
+    PRICES.update(fixed)
+    PRICES.update({k: {"input": float(v["input"]), "output": float(v["output"])} for k, v in prices.items()})
+    for k in LOCAL_MODELS:
+        PRICES[k] = {"input": 0.0, "output": 0.0}
+    PRICES_SOURCE = "prices set in Settings" if edited else f"OpenAI's standard prices, checked {PRICES_CHECKED}"
 
 
 def usage_cost(usage: dict) -> dict:
@@ -166,4 +182,4 @@ def usage_cost(usage: dict) -> dict:
         cost = None if price is None else (c["input"] * price["input"] + c["output"] * price["output"]) / 1e6
         calls.append({**c, "cost_usd": cost, "local": c["model"] in LOCAL_MODELS})
     return {**usage, "models": models, "calls": calls, "cost_usd": total, "priced_all": priced_all,
-            "prices_checked": PRICES_CHECKED}
+            "prices_checked": PRICES_SOURCE}
