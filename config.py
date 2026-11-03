@@ -19,7 +19,7 @@ RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-
 
 # Extraction + QC agents (agents.py)
 EXTRACT_MODEL = os.getenv("EXTRACT_MODEL", "gpt-4.1")  # reads PDFs natively (text + page images)
-QC_MODEL = os.getenv("QC_MODEL", "gpt-4o")  # a different model than the extractor catches different mistakes
+QC_MODEL = os.getenv("QC_MODEL", "gpt-4.1-mini")  # a separate, cheaper model checks the extractor; gpt-4o catches more for ~6x the price
 OCR_MODEL = os.getenv("OCR_MODEL", "gpt-4.1-mini")  # transcribes scanned pages so QC can search them
 EXTRACT_PAGES_PER_CALL = int(os.getenv("EXTRACT_PAGES_PER_CALL", 40))  # PDF pages sent per extraction call
 EXTRACT_BATCH_CHARS = int(os.getenv("EXTRACT_BATCH_CHARS", 40000))  # page text per call for non-PDF files

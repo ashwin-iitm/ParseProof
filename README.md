@@ -196,7 +196,7 @@ Change models in the app under **Settings**, or in `.env`. Other limits are in `
 | Setting | Default | What it does |
 |---|---|---|
 | `EXTRACT_MODEL` | `gpt-4.1` | Extraction model. It read page numbers correctly in testing, where `gpt-4o` did not. |
-| `QC_MODEL` | `gpt-4o` | Verification model. Deliberately different from the extraction model. |
+| `QC_MODEL` | `gpt-4.1-mini` | Verification model: a separate, cheaper model from the extractor. Set `gpt-4o` for the strongest check, at about 5 times the QC cost. |
 | `OCR_MODEL` | `gpt-4.1-mini` | Reads scanned pages. |
 | `EXTRACT_PAGES_PER_CALL` | `40` | PDF pages sent per extraction call. Larger documents are split and run in parallel. |
 | `AGENT_MAX_CONCURRENCY` | `8` | How many model calls run in parallel within one document. |
@@ -206,7 +206,7 @@ Change models in the app under **Settings**, or in `.env`. Other limits are in `
 
 OpenAI standard prices per 1M tokens (input / output), from [OpenAI's pricing page](https://developers.openai.com/api/docs/pricing) on 3 Nov 2026: `gpt-4.1` $2.00 / $8.00, `gpt-4o` $2.50 / $10.00, `gpt-4.1-mini` $0.40 / $1.60, `text-embedding-3-small` $0.02. The reranker runs locally and is free.
 
-Measured runs: a 2-page scanned invoice with 11 fields cost **$0.074**, a 4-page bank statement with 13 fields cost **$0.206**. About 85% of that is the QC checker (one gpt-4o call per field, with page text and page pictures). The app shows each run's tokens and estimated cost in the run header (click it for the split per model) and in the Runs list, and the Excel export has a `Cost (USD)` column on the `Runs` sheet. The prices live in `PRICES` in `config.py`: update them there when OpenAI changes them, and older runs are re-priced too. A model with no price there is left out of the total. The [explainer](docs/parseproof-explained.html) has the full breakdown.
+Measured runs with the default `gpt-4.1-mini` checker: a 2-page scanned invoice with 11 fields cost **$0.024**, a 4-page bank statement with 13 fields cost **$0.070**. With `gpt-4o` as the checker the same runs cost $0.074 and $0.206, because the checker sends page text and pictures once per field. The app shows each run's tokens and estimated cost in the run header (click it for the split per model) and in the Runs list, and the Excel export has a `Cost (USD)` column on the `Runs` sheet. The prices live in `PRICES` in `config.py`: update them there when OpenAI changes them, and older runs are re-priced too. A model with no price there is left out of the total. The [explainer](docs/parseproof-explained.html) has the full breakdown.
 
 ## Limits
 

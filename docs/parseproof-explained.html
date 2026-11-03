@@ -148,7 +148,7 @@ footer { color: var(--ink-3); font-size: 14px; }
   <div class="legend" aria-label="Colour key">
     <span class="who py">Python code (no AI)</span>
     <span class="who ex">OpenAI model: gpt-4.1, gpt-4.1-mini, embeddings</span>
-    <span class="who qc">QC checker: gpt-4o</span>
+    <span class="who qc">QC checker: gpt-4.1-mini</span>
     <span class="who lo">Small AI model on your computer</span>
     <span class="who hu">You</span>
   </div>
@@ -190,7 +190,7 @@ footer { color: var(--ink-3); font-size: 14px; }
     </div>
     <div class="answer">
       <span class="q">If Python finds the exact quote on the page, does the checker AI still run?</span>
-      <span class="a">Yes. Every field gets a gpt-4o check.</span>
+      <span class="a">Yes. Every field gets a gpt-4.1-mini check.</span>
       <p>Python can prove a sentence is on page 41. It can't tell whether that sentence answers the field: the flood deductible is a real sentence, but not the policy's deductible. The only time no checker AI runs is when no page can be found at all.</p>
     </div>
     <div class="answer">
@@ -212,13 +212,13 @@ footer { color: var(--ink-3); font-size: 14px; }
         <tr><td><span class="t">gpt-4.1-mini</span><span class="where">OCR</span></td><td>OpenAI</td><td>Types out the words on a scanned page</td><td>Only for PDF pages with almost no text (fewer than 25 characters)</td></tr>
         <tr><td><span class="t">gpt-4.1</span><span class="where">extractor</span></td><td>OpenAI</td><td>Reads the document and answers every field with value, page, quote and confidence</td><td>Once per 40 PDF pages, all at the same time</td></tr>
         <tr><td><span class="t">gpt-4.1</span><span class="where">self-check</span></td><td>OpenAI</td><td>Re-reads a page when its first quote isn't in the document</td><td>Rarely; one call for all such fields</td></tr>
-        <tr><td><span class="t">gpt-4o</span><span class="where">QC checker</span></td><td>OpenAI</td><td>Judges whether a value is right, using only 1 to 4 pages</td><td>Once per field, twice if it has to search</td></tr>
+        <tr><td><span class="t">gpt-4.1-mini</span><span class="where">QC checker (default)</span></td><td>OpenAI</td><td>Judges whether a value is right, using only 1 to 4 pages</td><td>Once per field, twice if it has to search</td></tr>
         <tr><td><span class="t">ms-marco-MiniLM-L-6-v2</span><span class="where">reranker</span></td><td>Your computer</td><td>Scores how well a page answers a search question</td><td>During a QC search, for up to 10 pages. Free.</td></tr>
         <tr><td><span class="t">gpt-4.1</span><span class="where">template drafting</span></td><td>OpenAI</td><td>Designs a template from your description and a sample document</td><td>Only when you click Create with AI. Not part of a run.</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">gpt-4.1, gpt-4o and gpt-4.1-mini are chat models: they read and write. The embedding model and the reranker only produce numbers. All the OpenAI models can be changed under Settings.</p>
+  <p class="prose muted">gpt-4.1 and gpt-4.1-mini are chat models: they read and write. The embedding model and the reranker only produce numbers. All the OpenAI models can be changed under Settings; <code>gpt-4o</code> is the stronger, dearer choice for the QC checker (see <a href="#cost">What it costs</a>).</p>
 </section>
 
 <section id="example">
@@ -306,7 +306,7 @@ footer { color: var(--ink-3); font-size: 14px; }
         <rect x="660" y="422" width="240" height="84" rx="8" class="n-qc"/>
         <text x="780" y="450" text-anchor="middle" class="lbl">QC check × 14 fields</text>
         <text x="780" y="470" text-anchor="middle" class="sub">at the same time</text>
-        <text x="780" y="486" text-anchor="middle" class="sub">Python + gpt-4o + reranker</text>
+        <text x="780" y="486" text-anchor="middle" class="sub">Python + gpt-4.1-mini + reranker</text>
 
         <rect x="420" y="427" width="200" height="74" rx="8" class="n-py"/>
         <text x="520" y="456" text-anchor="middle" class="lbl">Rule checks</text>
@@ -465,10 +465,10 @@ footer { color: var(--ink-3); font-size: 14px; }
 
     <div class="step qc">
       <div class="step-body">
-        <div class="step-head"><h3>One QC check per field</h3><span class="who py">Python</span><span class="who qc">gpt-4o</span><span class="who lo">reranker</span></div>
+        <div class="step-head"><h3>One QC check per field</h3><span class="who py">Python</span><span class="who qc">gpt-4.1-mini</span><span class="who lo">reranker</span></div>
         <p class="kid">A second teacher, who did not write the answers, opens the book on the page the student named.</p>
-        <p>All 14 fields are checked at the same time, with up to 8 AI calls running at once. Each check is: Python locates the quote, gpt-4o judges the value on those pages, Python checks gpt-4o's proof, and, at most once, searches for better pages and asks again. <a href="#qc">The next section</a> shows it as a diagram and follows three fields.</p>
-        <p class="sends"><b>Sent to OpenAI:</b> per field, the text and pictures of 1 to 4 pages to gpt-4o, and, only if a search runs, the search question to the embedding model.</p>
+        <p>All 14 fields are checked at the same time, with up to 8 AI calls running at once. Each check is: Python locates the quote, gpt-4.1-mini judges the value on those pages, Python checks gpt-4.1-mini's proof, and, at most once, searches for better pages and asks again. <a href="#qc">The next section</a> shows it as a diagram and follows three fields.</p>
+        <p class="sends"><b>Sent to OpenAI:</b> per field, the text and pictures of 1 to 4 pages to gpt-4.1-mini, and, only if a search runs, the search question to the embedding model.</p>
       </div>
     </div>
 
@@ -488,7 +488,7 @@ footer { color: var(--ink-3); font-size: 14px; }
     <div class="step py">
       <div class="step-body">
         <div class="step-head"><h3>The report is saved</h3><span class="who py">Python</span></div>
-        <p>For every field ParseProof saves the status, the extracted and checked values, both quotes, <b>every page each quote appears on</b>, the pages that were read, the notes, and the exact request sent to gpt-4o. It also saves the run's time, the number of AI calls, and the tokens per model, which the app turns into a cost. Everything goes into one database file, <code>data/parseproof.db</code>, on your computer.</p>
+        <p>For every field ParseProof saves the status, the extracted and checked values, both quotes, <b>every page each quote appears on</b>, the pages that were read, the notes, and the exact request sent to gpt-4.1-mini. It also saves the run's time, the number of AI calls, and the tokens per model, which the app turns into a cost. Everything goes into one database file, <code>data/parseproof.db</code>, on your computer.</p>
         <p class="sends"><b>Sent to OpenAI:</b> nothing.</p>
       </div>
     </div>
@@ -508,7 +508,7 @@ footer { color: var(--ink-3); font-size: 14px; }
   <h2>Inside one QC check</h2>
   <figure>
     <div class="svgwrap">
-      <svg viewBox="0 0 900 520" role="img" aria-label="QC check for one field. Step 1, Python locate: is the quote on the cited page? If yes, go to step 2. If the quote is nowhere or nothing was extracted, search the index for the best pages, then go to step 2. Step 2, gpt-4o verify reads only those pages. Step 3, Python checks the checker's proof is on the page. If the verdict is wrong or not found, or the proof is fake, search once more and verify again. Step 4 decides Verified, Mismatch or Needs review. If search finds no page at all, the field goes to Needs review with no AI call.">
+      <svg viewBox="0 0 900 520" role="img" aria-label="QC check for one field. Step 1, Python locate: is the quote on the cited page? If yes, go to step 2. If the quote is nowhere or nothing was extracted, search the index for the best pages, then go to step 2. Step 2, gpt-4.1-mini verify reads only those pages. Step 3, Python checks the checker's proof is on the page. If the verdict is wrong or not found, or the proof is fake, search once more and verify again. Step 4 decides Verified, Mismatch or Needs review. If search finds no page at all, the field goes to Needs review with no AI call.">
         <defs>
           <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah"/></marker>
           <marker id="a3l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah loop"/></marker>
@@ -520,7 +520,7 @@ footer { color: var(--ink-3); font-size: 14px; }
         <text x="125" y="114" text-anchor="middle" class="sub">cited page? (rapidfuzz)</text>
 
         <rect x="345" y="50" width="210" height="84" rx="8" class="n-qc"/>
-        <text x="450" y="78" text-anchor="middle" class="lbl">2 · Verify · gpt-4o</text>
+        <text x="450" y="78" text-anchor="middle" class="lbl">2 · Verify · gpt-4.1-mini</text>
         <text x="450" y="98" text-anchor="middle" class="sub">reads only those pages:</text>
         <text x="450" y="114" text-anchor="middle" class="sub">their text + pictures</text>
 
@@ -565,10 +565,10 @@ footer { color: var(--ink-3); font-size: 14px; }
         <text x="460" y="478" class="elbl">Needs review, no AI call</text>
       </svg>
     </div>
-    <figcaption>The purple dashed arrow is the only loop, and it runs at most once per field, so a field never costs more than two gpt-4o calls. The search box uses the embedding model for the question and the reranker on your computer.</figcaption>
+    <figcaption>The purple dashed arrow is the only loop, and it runs at most once per field, so a field never costs more than two gpt-4.1-mini calls. The search box uses the embedding model for the question and the reranker on your computer.</figcaption>
   </figure>
 
-  <h3>What gpt-4o is told and sent</h3>
+  <h3>What gpt-4.1-mini is told and sent</h3>
   <div class="pair">
     <figure>
       <figcaption>Its rules (shortened)</figcaption>
@@ -601,29 +601,29 @@ Source pages:
   <h3>The policy number: the simple path</h3>
   <ul class="plain">
     <li><b>Locate (Python):</b> “Policy No. NSI-CGL-2026-004512” is on page 2. Go to verify with page 2.</li>
-    <li><b>Verify (gpt-4o):</b> reads page 2 and answers “correct”, with its own proof quote.</li>
+    <li><b>Verify (gpt-4.1-mini):</b> reads page 2 and answers “correct”, with its own proof quote.</li>
     <li><b>Check the checker (Python):</b> the proof is on page 2. Decide: <span class="pass">Verified</span>.</li>
   </ul>
-  <p class="muted">One gpt-4o call, no search. Most fields go this way.</p>
+  <p class="muted">One gpt-4.1-mini call, no search. Most fields go this way.</p>
 
   <h3>The deductible: why the checker must run even when the quote is found</h3>
   <ol class="plain">
     <li><b>Locate (Python):</b> “Flood deductible: ₹2,50,000 per occurrence” is on page 41, exactly. The sentence is real.</li>
-    <li><b>Verify (gpt-4o), first try:</b> reads page 41 and sees a flood add-on, not the policy's deductible. Verdict: not found on these pages.</li>
+    <li><b>Verify (gpt-4.1-mini), first try:</b> reads page 41 and sees a flood add-on, not the policy's deductible. Verdict: not found on these pages.</li>
     <li><b>Search once (Python):</b> the question “deductible · Deductible or self-insured retention amount · ₹2,50,000” returns pages 2, 7 and 18. <a href="#search">How, step by step.</a></li>
-    <li><b>Verify (gpt-4o), second try:</b> reads pages 41, 2, 7 and 18 together and answers “incorrect, it is ₹50,000”, with the proof “Deductible: ₹50,000 each claim” on page 2.</li>
+    <li><b>Verify (gpt-4.1-mini), second try:</b> reads pages 41, 2, 7 and 18 together and answers “incorrect, it is ₹50,000”, with the proof “Deductible: ₹50,000 each claim” on page 2.</li>
     <li><b>Check the checker (Python):</b> the proof is on page 2, and the digits 50000 are in it. Decide: <span class="fail">Mismatch</span>. The review screen shows ₹2,50,000 crossed out and ₹50,000 suggested, with page 2 highlighted.</li>
   </ol>
   <div class="callout key">
     <h3>Python finding the quote is necessary, not enough</h3>
-    <p>Python proves a sentence <em>exists</em>. Only an AI can tell whether that sentence <em>answers the field</em>. Without the checker, the flood deductible would have gone into the spreadsheet with a perfect quote beside it. So every field gets a gpt-4o check, and Python then checks gpt-4o's proof in turn.</p>
+    <p>Python proves a sentence <em>exists</em>. Only an AI can tell whether that sentence <em>answers the field</em>. Without the checker, the flood deductible would have gone into the spreadsheet with a perfect quote beside it. So every field gets a gpt-4.1-mini check, and Python then checks gpt-4.1-mini's proof in turn.</p>
   </div>
 
   <h3>The broker: a field that isn't there</h3>
   <ul class="plain">
     <li><b>Locate (Python):</b> nothing was extracted, so there's no quote to look for. Go straight to search.</li>
     <li><b>Search:</b> the best 3 pages for “broker name · Insurance broker, agent or producer named on the policy”.</li>
-    <li><b>Verify (gpt-4o):</b> not found. Broker isn't a required field, so Decide gives <span class="pass">Verified</span> with the note “Confirmed absent on the pages checked”. If it were required, it would be <span class="rev">Needs review</span>.</li>
+    <li><b>Verify (gpt-4.1-mini):</b> not found. Broker isn't a required field, so Decide gives <span class="pass">Verified</span> with the note “Confirmed absent on the pages checked”. If it were required, it would be <span class="rev">Needs review</span>.</li>
   </ul>
 
   <h3>How the final status is decided</h3>
@@ -720,7 +720,7 @@ Source pages:
         <tr><td>Building the index</td><td><code>text-embedding-3-small</code></td><td>The text of <b>every page</b>, up to 24,000 characters each</td><td>First run of a file</td></tr>
         <tr><td>Extraction</td><td><code>gpt-4.1</code></td><td>The PDF file in pieces of up to 40 pages, or Python's text for Excel/Word/CSV, plus the field list</td><td>Every run</td></tr>
         <tr><td>Self-check</td><td><code>gpt-4.1</code></td><td>The text and picture of a page whose quote wasn't found</td><td>Rarely</td></tr>
-        <tr><td>QC check</td><td><code>gpt-4o</code></td><td>One field's name, description and value, with the text and pictures of 1 to 4 pages</td><td>Once or twice per field</td></tr>
+        <tr><td>QC check</td><td><code>gpt-4.1-mini</code></td><td>One field's name, description and value, with the text and pictures of 1 to 4 pages</td><td>Once or twice per field</td></tr>
         <tr><td>QC search</td><td><code>text-embedding-3-small</code></td><td>The search question (field name, description, extracted value)</td><td>Only when a search runs</td></tr>
         <tr><td>Create with AI (templates)</td><td><code>gpt-4.1</code></td><td>Your description, and the first 30 pages of a sample document if you attach one</td><td>Only when you use it</td></tr>
         <tr><td>Settings → test key</td><td>none</td><td>Asks OpenAI for its list of models, to check the key works. No document data.</td><td>When you click it</td></tr>
@@ -738,7 +738,8 @@ Source pages:
       <thead><tr><th style="width:24%">Job</th><th>Model</th><th>Input · per 1M tokens</th><th>Output · per 1M tokens</th><th>Why this model</th></tr></thead>
       <tbody>
         <tr><td>Extraction, self-check, templates</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>Reads PDF files directly; read page numbers correctly in our tests where gpt-4o didn't</td></tr>
-        <tr><td>QC checker</td><td><code>gpt-4o</code></td><td class="num">$2.50</td><td class="num">$10.00</td><td>A different model from the extractor, so it doesn't share its blind spots</td></tr>
+        <tr><td>QC checker (default)</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>A separate, smaller model from the extractor, at a fifth of the price. Judging a value on 1 to 4 pages is a narrower job than reading a whole document.</td></tr>
+        <tr><td>QC checker (optional)</td><td><code>gpt-4o</code></td><td class="num">$2.50</td><td class="num">$10.00</td><td>A different model family from the extractor, so it shares fewer blind spots. About 5 times the QC cost.</td></tr>
         <tr><td>OCR</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>Typing out a page is easy work</td></tr>
         <tr><td>Embeddings</td><td><code>text-embedding-3-small</code></td><td class="num">$0.02</td><td class="num">—</td><td>Almost free: all 60 pages cost a fraction of a cent</td></tr>
         <tr><td>Reranker</td><td><code>ms-marco-MiniLM-L-6-v2</code></td><td class="num">free</td><td class="num">free</td><td>Runs on your computer</td></tr>
@@ -748,37 +749,41 @@ Source pages:
   <p class="prose muted">OpenAI's standard prices from <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; the app reads them from <code>PRICES</code> in <code>config.py</code>.</p>
 
   <h3>What real runs cost</h3>
+  <p class="prose">Measured from the token counts the app records, multiplied by the prices above. Both documents were run with each checker:</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Document</th><th>Fields</th><th>gpt-4.1 · extract</th><th>gpt-4o · QC</th><th>Embeddings</th><th>Total</th></tr></thead>
+      <thead><tr><th>Document</th><th>Checker</th><th>gpt-4.1 · extract</th><th>Checker · QC</th><th>Total</th><th>Result</th></tr></thead>
       <tbody>
-        <tr><td>2-page scanned invoice</td><td class="num">11</td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 23,148 tokens · $0.064</td><td class="num">$0.00002</td><td class="num"><b>$0.074</b></td></tr>
-        <tr><td>4-page bank statement</td><td class="num">13</td><td class="num">2 calls · 15,196 tokens · $0.035</td><td class="num">13 calls · 65,780 tokens · $0.171</td><td class="num">$0.000002</td><td class="num"><b>$0.206</b></td></tr>
+        <tr class="win"><td>2-page scanned invoice, 11 fields</td><td><code>gpt-4.1-mini</code></td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 33,837 tokens · $0.015</td><td class="num"><b>$0.024</b></td><td>10 verified, wrong GSTIN caught</td></tr>
+        <tr><td>2-page scanned invoice, 11 fields</td><td><code>gpt-4o</code></td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 23,148 tokens · $0.064</td><td class="num"><b>$0.074</b></td><td>The same</td></tr>
+        <tr class="win"><td>4-page bank statement, 13 fields</td><td><code>gpt-4.1-mini</code></td><td class="num">2 calls · 15,218 tokens · $0.035</td><td class="num">13 calls · 84,628 tokens · $0.035</td><td class="num"><b>$0.070</b></td><td>10 verified, 3 to review</td></tr>
+        <tr><td>4-page bank statement, 13 fields</td><td><code>gpt-4o</code></td><td class="num">2 calls · 15,196 tokens · $0.035</td><td class="num">13 calls · 65,780 tokens · $0.171</td><td class="num"><b>$0.206</b></td><td>11 verified, 2 to review</td></tr>
       </tbody>
     </table>
   </div>
   <div class="callout key">
-    <h3>The QC checker is about 85% of the bill</h3>
-    <p>Each field's check sends whole pages of text plus pictures of them, and there is one check per field (two when it searches). The extractor reads the document once. So cost grows mostly with the <b>number of fields</b>. These two runs show tiny embedding costs because their index already existed or the documents are short.</p>
+    <h3>gpt-4.1-mini cuts the checking cost to about a fifth</h3>
+    <p>It counts page pictures as more tokens (30–50% more here), but each token is six times cheaper, so the QC part fell from $0.064 to $0.015 and from $0.171 to $0.035. With gpt-4.1-mini the checker is about half of the bill and extraction the other half; with gpt-4o the checker was about 85%.</p>
+    <p>The one difference in results: on the bank statement, the bank name is printed only in the logo, which has no text. gpt-4o called it correct from a transaction line containing “KKBK”, which is weak proof. gpt-4.1-mini said it couldn't find it, so the field went to Needs review. That is the safer answer, but it is one more field for you to look at.</p>
   </div>
 
-  <h3>A rough estimate for the 60-page policy</h3>
+  <h3>A rough estimate for the 60-page policy, with gpt-4.1-mini checking</h3>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Part</th><th>How it's worked out</th><th>Estimate</th></tr></thead>
       <tbody>
         <tr><td>Extraction</td><td class="num">60 pages × $0.005–0.009 per page</td><td class="num">$0.30–0.54</td></tr>
-        <tr><td>QC</td><td class="num">14 fields × $0.006–0.013, plus a few second checks</td><td class="num">$0.10–0.25</td></tr>
+        <tr><td>QC</td><td class="num">14 fields × $0.0013–0.0027, plus a few second checks</td><td class="num">$0.02–0.05</td></tr>
         <tr><td>OCR (1 page) and embeddings (60 pages)</td><td class="num">gpt-4.1-mini and text-embedding-3-small</td><td class="num">under $0.01</td></tr>
-        <tr><td><b>One run</b></td><td></td><td class="num"><b>about $0.40–0.80</b></td></tr>
+        <tr><td><b>One run</b></td><td></td><td class="num"><b>about $0.30–0.60</b></td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">An estimate, not a measurement: pages vary a lot in how much text they hold. The app shows the exact tokens and cost of every run in the run header (click it for each model) and in the Runs list, and the Excel export has a Cost (USD) column. The cost of Create with AI template drafting isn't included in run totals.</p>
+  <p class="prose muted">An estimate, not a measurement: pages vary a lot in how much text they hold. With gpt-4o checking, the QC part would be about $0.10–0.25 instead. The app shows the exact tokens and cost of every run in the run header (click it for each model) and in the Runs list, and the Excel export has a Cost (USD) column. Create with AI template drafting isn't included in run totals.</p>
 
   <h3>If cost matters</h3>
   <ul class="plain">
-    <li><b>A cheaper checker:</b> set the QC model to <code>gpt-4.1-mini</code> under Settings. Its input price is about a sixth of gpt-4o's. Test it on known documents first; a weaker checker can miss more.</li>
+    <li><b>The checker is already the cheap model.</b> For the strongest check, set the QC model to <code>gpt-4o</code> under Settings, at about five times the QC cost. Most of the bill is now extraction, which grows with page count.</li>
     <li><b>Fewer fields:</b> each field is one check.</li>
     <li><b>Fewer pages:</b> if you only need the first 10 pages of a 200-page contract, upload those.</li>
   </ul>
@@ -793,7 +798,7 @@ Source pages:
       <tbody>
         <tr><td>Extraction</td><td>The code: one call per 40 pages</td></tr>
         <tr><td>Self-check</td><td>The code: only when Python can't find a quote</td></tr>
-        <tr><td>QC check</td><td>The code: locate, verify, search again only if the verdict is wrong or not found, then decide. gpt-4o judges; Python reads its answer and steers.</td></tr>
+        <tr><td>QC check</td><td>The code: locate, verify, search again only if the verdict is wrong or not found, then decide. gpt-4.1-mini judges; Python reads its answer and steers.</td></tr>
         <tr><td>Search, rules, export</td><td>Plain code</td></tr>
       </tbody>
     </table>
@@ -830,7 +835,7 @@ Source pages:
         <tr><td>Most other words allowed between quote words</td><td class="num">8</td><td>Words-in-order check</td></tr>
         <tr><td>Fewest words for words-in-order and same-words</td><td class="num">4</td><td>Python checks</td></tr>
         <tr><td>Page pictures per QC call</td><td class="num">up to 4, at 110 dpi</td><td>QC</td></tr>
-        <tr><td>gpt-4o calls per field</td><td class="num">1, at most 2</td><td>QC</td></tr>
+        <tr><td>Checker calls per field</td><td class="num">1, at most 2</td><td>QC</td></tr>
         <tr><td>Sum rule tolerance</td><td class="num">as set in the template (₹1 for insurance)</td><td>Rule checks</td></tr>
         <tr class="group"><td colspan="3">Speed</td></tr>
         <tr><td>AI calls at the same time, inside one document</td><td class="num">8</td><td>OCR, extraction pieces, QC checks</td></tr>
@@ -879,7 +884,7 @@ Source pages:
 <section id="faq">
   <h2>More questions people ask</h2>
   <div class="callout"><h3>Why do two runs of the same document sometimes give different answers?</h3><p>An AI writes its answer one small piece at a time and takes the most likely next piece. When two choices are almost tied, tiny differences on OpenAI's servers can tip it either way, even at temperature 0. No setting makes any AI model 100% repeatable. The self-check, the second AI and Python's proof checks are there to catch a slip before it reaches your spreadsheet.</p></div>
-  <div class="callout"><h3>Can it still be wrong?</h3><p>Yes, mainly when both AIs make the same mistake and the proof is a real sentence. That is rarer because they are different models and the checker reads only the relevant pages. Anything uncertain is marked Needs review rather than guessed.</p></div>
+  <div class="callout"><h3>Can it still be wrong?</h3><p>Yes, mainly when both AIs make the same mistake and the proof is a real sentence. The checker is a separate model that reads only the relevant pages, which makes that rarer. gpt-4.1 and gpt-4.1-mini come from the same model family, so for the most independent check, switch the checker to gpt-4o. Anything uncertain is marked Needs review rather than guessed.</p></div>
   <div class="callout"><h3>Does it work on scans and photos?</h3><p>Yes. The extractor reads the page pictures in the PDF, and OCR makes the scanned pages searchable for QC. Scanned pages have no text layer in the viewer, so the proof shows as a quote in the field panel instead of a highlight on the page.</p></div>
   <div class="callout"><h3>Can it read tables with many rows, like every line item or every claim?</h3><p>Not yet. Each field is one value. For repeating data, use summary fields that are written on the document, such as totals, counts or the largest item.</p></div>
   <div class="callout"><h3>What about password-protected PDFs?</h3><p>They are refused at upload with a clear message. Open the PDF, print it to a new PDF (Print → Save as PDF) and upload that copy.</p></div>
