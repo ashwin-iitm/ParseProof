@@ -1,5 +1,5 @@
 @echo off
-rem AdoVerse - sets itself up on first run, then starts the server and opens the app in your browser.
+rem ParseProof - sets itself up on first run, then starts the server and opens the app in your browser.
 cd /d "%~dp0"
 
 if not exist "venv\Scripts\python.exe" (

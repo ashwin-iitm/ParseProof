@@ -1,6 +1,6 @@
-# AdoVerse
+# ParseProof
 
-Document extraction you can sign off. AdoVerse:
+Document extraction you can sign off. ParseProof:
 1. **Extracts** fields from a document using OpenAI's native document input. The model reads text and
    page images, so scans and tables work.
 2. **Verifies** every value with a second, independent model. That model only reads the page the value
@@ -66,7 +66,7 @@ Open **Settings** in the app, paste your key and save. Or put it in the `.env` f
 OPENAI_API_KEY=sk-...
 ```
 
-The key stays on your machine, in `.env`. The only outside service AdoVerse calls is OpenAI.
+The key stays on your machine, in `.env`. The only outside service ParseProof calls is OpenAI.
 
 ### 4. Try it
 
@@ -102,7 +102,7 @@ On macOS or Linux use `python3` and `venv/bin/python` instead of `venv\Scripts\p
 |---|---|
 | `python` is not recognized | Install Python and tick **Add python.exe to PATH**, then open a new terminal. |
 | `Node.js 18 or newer is needed` | Install Node.js LTS, then open a new terminal. |
-| `address already in use` / port 8010 busy | AdoVerse is already running in another window. Close it, or open http://127.0.0.1:8010. |
+| `address already in use` / port 8010 busy | ParseProof is already running in another window. Close it, or open http://127.0.0.1:8010. |
 | The page is blank or looks old | Refresh the browser once. If you changed `web/src`, run `npm run build` in `web/`. |
 | "Add your OpenAI API key" banner | Add the key under **Settings**. |
 | "This PDF is password-protected" | Bank statements are often locked. Open the PDF, print it to a new PDF (Print → Save as PDF) and upload that copy. |
@@ -176,7 +176,7 @@ instead of labels (`Total amount`) as column headers. The same exports are avail
 | `agents.py` | LangGraph pipeline: extraction agent, per-field QC agent, rules |
 | `openai_extract.py` | OpenAI document extraction and OCR |
 | `doc_index.py` | Page-level hybrid RAG index used by QC |
-| `db.py` | SQLite (`data/adoverse.db`): documents, templates, runs, batches, settings |
+| `db.py` | SQLite (`data/parseproof.db`): documents, templates, runs, batches, settings |
 | `exports.py` | Excel, CSV and JSON exports (data table and QC detail) |
 | `templates_seed.py` | Starter templates: Invoice, Loss run summary, Insurance policy, General document, Service agreement, Purchase order |
 | `vector_store.py` | Embeddings, FAISS and the cross-encoder reranker |

@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from config import DATA_DIR
 
-DB_PATH = DATA_DIR / "adoverse.db"
+DB_PATH = DATA_DIR / "parseproof.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (
@@ -79,12 +79,13 @@ def connect():
 
 
 def init() -> None:
-    # The product was called Attest at first; carry its database over once
-    old = DATA_DIR / "attest.db"
-    if old.exists() and not DB_PATH.exists():
+    # The product was called Attest, then AdoVerse; carry the newest old database over once
+    for old in ("adoverse.db", "attest.db"):
+        if DB_PATH.exists() or not (DATA_DIR / old).exists():
+            continue
         for suffix in ("", "-wal", "-shm"):
-            if (DATA_DIR / f"attest.db{suffix}").exists():
-                (DATA_DIR / f"attest.db{suffix}").rename(DATA_DIR / f"adoverse.db{suffix}")
+            if (DATA_DIR / f"{old}{suffix}").exists():
+                (DATA_DIR / f"{old}{suffix}").rename(DATA_DIR / f"{DB_PATH.name}{suffix}")
     with connect() as c:
         c.execute("PRAGMA journal_mode=WAL")
         c.executescript(SCHEMA)

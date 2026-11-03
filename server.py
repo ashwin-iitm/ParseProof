@@ -1,5 +1,5 @@
 """
-server.py — AdoVerse: document extraction with evidence-checked QC.
+server.py — ParseProof: document extraction with evidence-checked QC.
 
   Extraction: OpenAI native document input (openai_extract.py)
   QC:         per-field agents over the hybrid RAG page index (agents.py, doc_index.py)
@@ -45,7 +45,7 @@ WEB_DIST = BASE_DIR / "web" / "dist"
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
 
-app = FastAPI(title="AdoVerse", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="ParseProof", docs_url="/api/docs", openapi_url="/api/openapi.json")
 # Documents processed at the same time; each one also checks up to AGENT_MAX_CONCURRENCY fields in parallel
 RUN_CONCURRENCY = int(os.getenv("RUN_CONCURRENCY", 3))
 MAX_BATCH_DOCUMENTS = 500
@@ -597,7 +597,7 @@ def export(batch: Optional[str] = None, runs: Optional[str] = None, format: str 
         r["batch_name"] = batch_names.get(r.get("batch_id"))
     if not title:
         title = Path(selected[0]["filename"]).stem if len(selected) == 1 else \
-            f"AdoVerse export {datetime.now().strftime('%Y-%m-%d %H%M')}"
+            f"ParseProof export {datetime.now().strftime('%Y-%m-%d %H%M')}"
     stem = exports.filename_for(title) + ("-approved" if approved_only else "")
     keys = headers == "keys"
 

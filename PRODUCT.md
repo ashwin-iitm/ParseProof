@@ -22,7 +22,7 @@ desk on a laptop or external monitor, processing documents one after another.
 
 ## Product Purpose
 
-AdoVerse extracts structured fields from documents and proves each value. OpenAI reads the whole
+ParseProof extracts structured fields from documents and proves each value. OpenAI reads the whole
 document; a QC agent then re-checks every field against only the page it came from, using a hybrid
 RAG index (vector + keyword + reranker). The reviewer sees which fields passed, which were corrected
 and which need a human, with the source page and evidence highlighted, so they never re-read the
@@ -31,7 +31,7 @@ whole document. Success: a reviewer approves a document by looking at a handful 
 ## Positioning
 
 Every value comes with evidence that was verified in code (the quote must actually exist on the
-cited page), by a second, independent model. Extraction tools give values; AdoVerse gives values a
+cited page), by a second, independent model. Extraction tools give values; ParseProof gives values a
 reviewer can sign off.
 
 ## Operating Context

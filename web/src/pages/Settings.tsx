@@ -72,7 +72,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="Settings" description="AdoVerse runs on this machine. The only outside service it calls is OpenAI." />
+      <PageHeader title="Settings" description="ParseProof runs on this machine. The only outside service it calls is OpenAI." />
       <div className="max-w-[760px] space-y-6 px-8 py-6 max-sm:px-4">
         {!s ? (
           <Skeleton className="h-48 w-full" />

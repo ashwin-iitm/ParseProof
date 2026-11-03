@@ -136,7 +136,7 @@ export default function Runs() {
             <FileText className="mx-auto h-8 w-8 text-ink-3" strokeWidth={1.5} aria-hidden />
             <h2 className="mt-4 text-md font-semibold">No runs yet</h2>
             <p className="mt-2 text-sm text-ink-2">
-              Upload an invoice, agreement or purchase order and pick a template. AdoVerse pulls out every field, then a
+              Upload an invoice, agreement or purchase order and pick a template. ParseProof pulls out every field, then a
               second model confirms each value on the page it came from, so you only review what doesn't match.
             </p>
             <Button className="mt-5" variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => navigate("/new")}>

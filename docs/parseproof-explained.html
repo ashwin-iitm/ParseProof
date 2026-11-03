@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AdoVerse, Explained Simply</title>
+<title>ParseProof, Explained Simply</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -180,9 +180,9 @@ svg .badrun { fill: var(--bad); font-size: 12.5px; font-weight: 700; }
 <main>
 
 <header style="display:flex;flex-direction:column;gap:16px">
-  <span class="eyebrow">AdoVerse · how it works</span>
-  <h1>AdoVerse, explained simply</h1>
-  <p class="lede">AdoVerse pulls facts out of documents with AI, then proves every fact by pointing to the exact page and sentence it came from. This page walks through one document from start to finish and names every piece of technology on the way.</p>
+  <span class="eyebrow">ParseProof · how it works</span>
+  <h1>ParseProof, explained simply</h1>
+  <p class="lede">ParseProof pulls facts out of documents with AI, then proves every fact by pointing to the exact page and sentence it came from. This page walks through one document from start to finish and names every piece of technology on the way.</p>
   <div class="legend" aria-label="Colour key">
     <span class="who py">Python code (no AI)</span>
     <span class="who ex">Extractor AI · gpt-4.1</span>
@@ -193,7 +193,7 @@ svg .badrun { fill: var(--bad); font-size: 12.5px; font-weight: 700; }
 
 <section>
   <h2>The big idea in one paragraph</h2>
-  <p class="prose">Imagine a student doing a reading test on a 100-page book. The student must write each answer, the page number, and the exact sentence that proves it. A teacher then checks each answer by opening the book <em>only on that page</em>. If the page is wrong, the teacher uses the index at the back of the book to find the right page. A second teacher makes sure the first teacher's proof is real. Only the answers that fail get sent to the head teacher. In AdoVerse, the student is one AI, the teacher is a different AI, the index and the proof-checking are plain Python, and the head teacher is your team.</p>
+  <p class="prose">Imagine a student doing a reading test on a 100-page book. The student must write each answer, the page number, and the exact sentence that proves it. A teacher then checks each answer by opening the book <em>only on that page</em>. If the page is wrong, the teacher uses the index at the back of the book to find the right page. A second teacher makes sure the first teacher's proof is real. Only the answers that fail get sent to the head teacher. In ParseProof, the student is one AI, the teacher is a different AI, the index and the proof-checking are plain Python, and the head teacher is your team.</p>
 </section>
 
 <section>
@@ -354,7 +354,7 @@ save_to_disk()</pre>
 
   <figure>
     <div class="svgwrap">
-      <svg viewBox="0 0 760 500" role="img" aria-label="The AdoVerse pipeline graph: ingest, then extract batches in parallel, merge, a self-check of the quotes, then one QC sub-graph per field in parallel, then rules and report. Each QC sub-graph runs locate, then verify or search, and can search once more before finalize.">
+      <svg viewBox="0 0 760 500" role="img" aria-label="The ParseProof pipeline graph: ingest, then extract batches in parallel, merge, a self-check of the quotes, then one QC sub-graph per field in parallel, then rules and report. Each QC sub-graph runs locate, then verify or search, and can search once more before finalize.">
         <defs>
           <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="arrowhead"/></marker>
           <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="arrowhead loop"/></marker>
@@ -454,7 +454,7 @@ save_to_disk()</pre>
   <h3>Four LangGraph ideas, in plain words</h3>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>LangGraph idea</th><th>Like…</th><th>In AdoVerse</th></tr></thead>
+      <thead><tr><th>LangGraph idea</th><th>Like…</th><th>In ParseProof</th></tr></thead>
       <tbody>
         <tr><td><span class="t">State</span></td><td>A shared notebook every step can read and write.</td><td>Holds the document, the template, the extracted fields and the QC results.</td></tr>
         <tr><td><span class="t">Conditional edge</span></td><td>An <code>if / else</code> arrow.</td><td>After <code>locate</code>: quote found? go to <code>verify</code>, else go to <code>search</code>.</td></tr>
@@ -470,7 +470,7 @@ save_to_disk()</pre>
   <p class="prose muted">Grouped by job. “Where” is the file in the project that uses it.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th style="width:24%">Tech</th><th style="width:38%">What it is, simply</th><th>What it does in AdoVerse</th></tr></thead>
+      <thead><tr><th style="width:24%">Tech</th><th style="width:38%">What it is, simply</th><th>What it does in ParseProof</th></tr></thead>
       <tbody>
         <tr class="group"><td colspan="3">AI models (OpenAI)</td></tr>
         <tr><td><span class="t">gpt-4.1</span><span class="where">openai_extract.py</span></td><td>OpenAI's large model that can read PDF files directly.</td><td>The extractor. Reads the document and returns value, page and quote for every field. Also drafts new templates from a description.</td></tr>
@@ -501,11 +501,11 @@ save_to_disk()</pre>
 
         <tr class="group"><td colspan="3">Reading documents</td></tr>
         <tr><td><span class="t">PyMuPDF (fitz)</span><span class="where">text_processing.py · agents.py</span></td><td>A fast PDF library.</td><td>Pulls text from each page in reading order, cuts big PDFs into 40-page pieces, and makes page pictures for the checker.</td></tr>
-        <tr><td><span class="t">python-docx, pandas</span><span class="where">text_processing.py</span></td><td>Libraries for Word files and spreadsheets.</td><td>Let AdoVerse also read Word, Excel and CSV files, not only PDFs.</td></tr>
+        <tr><td><span class="t">python-docx, pandas</span><span class="where">text_processing.py</span></td><td>Libraries for Word files and spreadsheets.</td><td>Let ParseProof also read Word, Excel and CSV files, not only PDFs.</td></tr>
 
         <tr class="group"><td colspan="3">Backend</td></tr>
         <tr><td><span class="t">FastAPI + uvicorn</span><span class="where">server.py</span></td><td>A Python web framework and the server that runs it.</td><td>The API the web page talks to: upload, start runs, review, approve, export. Runs on port 8010.</td></tr>
-        <tr><td><span class="t">SQLite</span><span class="where">db.py · data/adoverse.db</span></td><td>A small database stored in one file.</td><td>Saves documents, templates, runs, review decisions and settings.</td></tr>
+        <tr><td><span class="t">SQLite</span><span class="where">db.py · data/parseproof.db</span></td><td>A small database stored in one file.</td><td>Saves documents, templates, runs, review decisions and settings.</td></tr>
         <tr><td><span class="t">python-dotenv</span><span class="where">config.py · .env</span></td><td>Reads settings from a <code>.env</code> file.</td><td>Holds the OpenAI key and model names.</td></tr>
 
         <tr class="group"><td colspan="3">Frontend (the screens)</td></tr>
@@ -538,7 +538,7 @@ save_to_disk()</pre>
 
 <section id="why">
   <h2>Why the same bill can pass once and fail the next time</h2>
-  <p class="prose">Sooner or later your team will run the same document twice and get two different results. Here is a real case from a phone and wifi bill, the three reasons it happens, and the three safety nets AdoVerse now uses. (The name and address below are made up. The layout is the real one.)</p>
+  <p class="prose">Sooner or later your team will run the same document twice and get two different results. Here is a real case from a phone and wifi bill, the three reasons it happens, and the three safety nets ParseProof now uses. (The name and address below are made up. The layout is the real one.)</p>
 
   <h3>What happened</h3>
   <div class="compare">
@@ -556,7 +556,7 @@ save_to_disk()</pre>
     <div class="odd b"><span>other</span><span class="bar" style="width:1%"></span><span class="pct">1%</span></div>
   </div>
   <p class="prose muted">The numbers above are made up to show the idea. We can't see the real ones.</p>
-  <p class="prose"><b>Temperature</b> is a setting for how adventurous the model is. At a high temperature it sometimes picks a less likely piece, which is useful for writing poems. AdoVerse always uses <b>temperature 0</b>, which means “always take the most likely piece”.</p>
+  <p class="prose"><b>Temperature</b> is a setting for how adventurous the model is. At a high temperature it sometimes picks a less likely piece, which is useful for writing poems. ParseProof always uses <b>temperature 0</b>, which means “always take the most likely piece”.</p>
 
   <h3>Reason 2: “always the most likely” isn't perfectly steady</h3>
   <p class="prose">When two choices are almost tied, like 52% and 47% above, tiny rounding differences can swap which one comes first. OpenAI's servers work on many people's requests together, and the exact arithmetic changes very slightly depending on what else is in the batch. Nobody outside OpenAI can control that. Once one piece flips, everything after it follows a different path. If the model writes “Tamil” right after the name, it carries on with “Nadu, 600001” and never goes back for the street.</p>
@@ -697,7 +697,7 @@ save_to_disk()</pre>
 
   <div class="callout">
     <h3>Can we make the AI 100% repeatable?</h3>
-    <p>No. No setting does that, for any AI model today. That is exactly why AdoVerse has a second AI as checker, and Python checks that both AIs' proof is really on the page. With the safety nets, a mismatch is now much more likely to be a real problem in the document, like the wrong GSTIN, than a slip by the extractor.</p>
+    <p>No. No setting does that, for any AI model today. That is exactly why ParseProof has a second AI as checker, and Python checks that both AIs' proof is really on the page. With the safety nets, a mismatch is now much more likely to be a real problem in the document, like the wrong GSTIN, than a slip by the extractor.</p>
   </div>
 </section>
 
@@ -711,6 +711,6 @@ save_to_disk()</pre>
 </section>
 
 <hr>
-<footer>AdoVerse · running locally at 127.0.0.1:8010 · code in D:\rag (agents.py, doc_index.py, openai_extract.py, server.py, web/)</footer>
+<footer>ParseProof · running locally at 127.0.0.1:8010 · code in D:\rag (agents.py, doc_index.py, openai_extract.py, server.py, web/)</footer>
 
 </main>

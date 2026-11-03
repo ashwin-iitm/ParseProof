@@ -30,7 +30,7 @@ export default function Layout() {
       <aside className="flex w-[216px] shrink-0 flex-col border-r border-line bg-panel max-md:w-full max-md:flex-row max-md:items-center max-md:border-b max-md:border-r-0">
         <div className="flex h-14 items-center gap-2.5 px-5 max-md:px-4">
           <Logo />
-          <span className="text-md font-semibold tracking-[-0.01em]">AdoVerse</span>
+          <span className="text-md font-semibold tracking-[-0.01em]">ParseProof</span>
         </div>
         <nav className="flex flex-col gap-0.5 px-3 pt-2 max-md:flex-1 max-md:flex-row max-md:justify-end max-md:pt-0" aria-label="Main">
           {NAV.map(({ to, label, icon: Icon, end }) => (

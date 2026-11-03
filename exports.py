@@ -285,7 +285,7 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
                 cell.fill = fill
             note = _cell_note(r)
             if note:
-                cell.comment = Comment(note[:1500], "AdoVerse", width=320, height=140)
+                cell.comment = Comment(note[:1500], "ParseProof", width=320, height=140)
             if t == "number" and isinstance(cell.value, (int, float)):
                 cell.number_format = "#,##0.##########" if isinstance(cell.value, float) else "#,##0"
         if run.get("approved_at"):
@@ -355,7 +355,7 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
     key.column_dimensions["B"].width = 90
     key.append([title])
     key["A1"].font = Font(bold=True, size=14)
-    key.append([f"Exported {iso(time.time())} from AdoVerse · {len(runs)} document(s)"])
+    key.append([f"Exported {iso(time.time())} from ParseProof · {len(runs)} document(s)"])
     key.append([])
     for label, text, fill in [
         ("No colour", "Verified: a second model confirmed the value on its source page.", None),
@@ -385,5 +385,5 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
 
 
 def filename_for(title: str) -> str:
-    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", title).strip("-")[:60] or "adoverse-export"
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", title).strip("-")[:60] or "parseproof-export"
     return slug

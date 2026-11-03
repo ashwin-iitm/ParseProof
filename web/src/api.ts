@@ -204,7 +204,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(path, init);
   } catch {
-    throw new ApiError("Can't reach the AdoVerse server. Make sure it is running.");
+    throw new ApiError("Can't reach the ParseProof server. Make sure it is running.");
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

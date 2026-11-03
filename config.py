@@ -36,7 +36,7 @@ for _d in (INDEX_DIR, DOCUMENT_DIR):
 
 # Logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("adoverse")
+logger = logging.getLogger("parseproof")
 
 # -----------------------------
 # OPENAI CLIENT

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AdoVerse - sets itself up on first run, then starts the server at http://127.0.0.1:8010
+# ParseProof - sets itself up on first run, then starts the server at http://127.0.0.1:8010
 set -e
 cd "$(dirname "$0")"
 
