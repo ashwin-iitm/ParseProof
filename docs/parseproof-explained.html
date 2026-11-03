@@ -89,6 +89,7 @@ th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-botto
 th { font: 600 12px/1.4 var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); background: var(--sunk); }
 tr:last-child td { border-bottom: 0; }
 td.num { font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 14px; white-space: nowrap; }
+#cost td.num { white-space: normal; }
 td .t { font-weight: 700; display: block; }
 td .where { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-3); }
 tr.win td { background: color-mix(in srgb, var(--hu-bg) 70%, var(--surface)); }
@@ -568,19 +569,63 @@ footer { color: var(--ink-3); font-size: 14px; }
     </table>
   </div>
   <p class="prose">In the app, every field has a <b>QC request JSON</b> button that shows the exact request sent to gpt-4o and its reply.</p>
+</section>
 
-  <h3>Where the tokens go</h3>
-  <p class="prose">The checker uses most of the tokens, because every field sends whole pages of text plus their pictures. The extractor reads the document once. From real runs:</p>
+<section id="cost">
+  <h2>The models we use, and what they cost</h2>
+  <p class="prose">OpenAI charges per <b>token</b>, a small piece of text about three quarters of a word long. A page picture is also counted as tokens. You pay separately for what you send in (<b>input</b>) and what the model writes back (<b>output</b>); output costs four times as much, but answers here are short, so most of the bill is input.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Document</th><th>Fields</th><th>gpt-4.1 (extract)</th><th>gpt-4o (QC)</th><th>Total</th></tr></thead>
+      <thead><tr><th style="width:24%">Job in ParseProof</th><th>Model</th><th>Input · per 1M tokens</th><th>Output · per 1M tokens</th><th>Why this model</th></tr></thead>
       <tbody>
-        <tr><td>2-page scanned invoice</td><td class="num">11</td><td class="num" colspan="2">about 26,000 together</td><td class="num">26,000</td></tr>
-        <tr><td>4-page bank statement</td><td class="num">13</td><td class="num">15,200 (2 calls)</td><td class="num">65,800 (13 calls)</td><td class="num">81,100</td></tr>
+        <tr><td>Extract every field</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>Reads PDF files directly; read page numbers correctly in our tests where gpt-4o didn't</td></tr>
+        <tr><td>Self-check (rare)</td><td><code>gpt-4.1</code></td><td class="num">$2.00</td><td class="num">$8.00</td><td>The same model re-reads its own mistake</td></tr>
+        <tr><td>QC checker</td><td><code>gpt-4o</code></td><td class="num">$2.50</td><td class="num">$10.00</td><td>A different model from the extractor, so it doesn't share its blind spots</td></tr>
+        <tr><td>OCR of scanned pages</td><td><code>gpt-4.1-mini</code></td><td class="num">$0.40</td><td class="num">$1.60</td><td>Typing out a page is easy work, so the cheap model is enough</td></tr>
+        <tr><td>Embeddings for search</td><td><code>text-embedding-3-small</code></td><td class="num">$0.02</td><td class="num">—</td><td>Almost free: a whole 60-page document costs a fraction of a cent</td></tr>
+        <tr><td>Reranker</td><td><code>ms-marco-MiniLM-L-6-v2</code></td><td class="num">free</td><td class="num">free</td><td>Runs on your own computer, no OpenAI call</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="prose muted">The run header in the app shows these numbers for every run. Click the token count for the split per model.</p>
+  <p class="prose muted">OpenAI's standard prices as listed on <a href="https://developers.openai.com/api/docs/pricing">developers.openai.com/api/docs/pricing</a> on 3 Nov 2026. Prices change; check that page before quoting a budget. All models can be changed under Settings in the app.</p>
+
+  <h3>What real runs cost</h3>
+  <p class="prose">Measured from the token counts the app records for every run, multiplied by the prices above:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Document</th><th>Fields</th><th>gpt-4.1 · extract</th><th>gpt-4o · QC</th><th>Embeddings</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>2-page scanned invoice</td><td class="num">11</td><td class="num">1 call · 2,849 tokens · $0.010</td><td class="num">12 calls · 23,148 tokens · $0.064</td><td class="num">$0.00002</td><td class="num"><b>$0.074</b></td></tr>
+        <tr><td>4-page bank statement</td><td class="num">13</td><td class="num">2 calls · 15,196 tokens · $0.035</td><td class="num">13 calls · 65,780 tokens · $0.171</td><td class="num">$0.000002</td><td class="num"><b>$0.206</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <h3>The checker is about 85% of the bill</h3>
+    <p>Each field's check sends whole pages of text plus pictures of them, and there is one check per field (two when it has to search again). The extractor reads the document once. So the cost grows mostly with the <b>number of fields</b>, and with how full the pages are.</p>
+  </div>
+
+  <h3>A rough estimate for the 60-page policy</h3>
+  <p class="prose">From the two runs above, extraction costs about $0.005 to $0.009 per page and each field's check about $0.006 to $0.013. For our 60-page policy with 14 fields:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Part</th><th>How it's worked out</th><th>Estimate</th></tr></thead>
+      <tbody>
+        <tr><td>Extraction</td><td class="num">60 pages × $0.005–0.009</td><td class="num">$0.30–0.54</td></tr>
+        <tr><td>QC</td><td class="num">14 fields × $0.006–0.013, plus a few second checks</td><td class="num">$0.10–0.25</td></tr>
+        <tr><td>OCR (1 scanned page) and embeddings</td><td class="num">gpt-4.1-mini and text-embedding-3-small</td><td class="num">under $0.01</td></tr>
+        <tr><td><b>Total for one run</b></td><td></td><td class="num"><b>about $0.40–0.80</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">This is an estimate, not a measurement: real pages vary a lot in how much text they hold. Run one document and read the exact token count in the run header (click it for the split per model). A re-run of the same file skips the embeddings and OCR, because the index is saved.</p>
+
+  <h3>If cost matters</h3>
+  <ul class="plain">
+    <li><b>Use a cheaper checker:</b> set the QC model to <code>gpt-4.1-mini</code> under Settings. Its input price is $0.40 instead of $2.50, so the QC part costs about a sixth. Test it on a few known documents first, because a weaker checker can miss more.</li>
+    <li><b>Ask for fewer fields:</b> every field is one check. A 6-field template costs about half as much to check as a 14-field one.</li>
+    <li><b>Split very long documents:</b> if you only need the first 10 pages of a 200-page contract, upload those pages.</li>
+  </ul>
 </section>
 
 <section>

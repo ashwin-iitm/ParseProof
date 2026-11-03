@@ -202,6 +202,12 @@ Change models in the app under **Settings**, or in `.env`. Other limits are in `
 | `AGENT_MAX_CONCURRENCY` | `8` | How many model calls run in parallel within one document. |
 | `RUN_CONCURRENCY` | `3` | How many documents of a batch are processed at the same time. Raise it if your OpenAI rate limits allow. |
 
+### What it costs
+
+OpenAI standard prices per 1M tokens (input / output), from [OpenAI's pricing page](https://developers.openai.com/api/docs/pricing) on 3 Nov 2026: `gpt-4.1` $2.00 / $8.00, `gpt-4o` $2.50 / $10.00, `gpt-4.1-mini` $0.40 / $1.60, `text-embedding-3-small` $0.02. The reranker runs locally and is free.
+
+Measured runs: a 2-page scanned invoice with 11 fields cost **$0.074**, a 4-page bank statement with 13 fields cost **$0.206**. About 85% of that is the QC checker (one gpt-4o call per field, with page text and page pictures). Every run shows its token count in the run header; the [explainer](docs/parseproof-explained.html) has the full breakdown.
+
 ## Limits
 
 - **Local and single-user:** no login. Run it on your own machine or a trusted network.
