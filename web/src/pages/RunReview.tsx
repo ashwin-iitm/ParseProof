@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { AlertCircle, ArrowLeft, Braces, Check, CircleDashed, Pencil, RotateCcw, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Braces, Check, CircleDashed, Clock, Pencil, Receipt, RotateCcw, Undo2 } from "lucide-react";
 import { api, type FieldResult, type ReviewDecision, type Run } from "@/api";
 import { Button, Input, ProgressBar, Skeleton, Spinner, StatusTag } from "@/components/ui";
 import DocumentViewer from "@/components/DocumentViewer";
 import ExportMenu from "@/components/ExportMenu";
 import QcCallDialog from "@/components/QcCallDialog";
 import TokenUsage from "@/components/TokenUsage";
+import RunReportDialog from "@/components/RunReportDialog";
 import { useToast } from "@/components/toast";
 import { duration, fieldLabel, show } from "@/lib/format";
 
@@ -269,6 +270,25 @@ function FieldRow({ runId, models, r, decision, selected, locked, onSelect, onJu
   );
 }
 
+/** Time taken by a finished run, or a live count while it is still working. */
+function TimeTaken({ run }: { run: Run }) {
+  const active = run.status === "queued" || run.status === "running";
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => {
+    if (!active) return;
+    const t = setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => clearInterval(t);
+  }, [active]);
+  const seconds = active ? now - run.created_at : run.report?.seconds ?? (run.finished_at ? run.finished_at - run.created_at : null);
+  if (seconds == null) return null;
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs text-ink-2" title={active ? "Time since the run started" : "Time the run took"}>
+      <Clock className="h-3.5 w-3.5" aria-hidden />
+      {active ? "Elapsed" : "Time taken"} <span className="font-semibold tabular-nums text-ink">{duration(Math.max(0, seconds))}</span>
+    </span>
+  );
+}
+
 function Progress({ run }: { run: Run }) {
   const current = stageIndex(run.stage);
   return (
@@ -299,7 +319,8 @@ export default function RunReview() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const toast = useToast();
-  const [filter, setFilter] = useState<"attention" | "all" | null>(null);
+  const [filter, setFilter] = useState<"attention" | "verified" | "all" | null>(null);
+  const [showReport, setShowReport] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
@@ -312,8 +333,9 @@ export default function RunReview() {
   const report = run?.report ?? null;
   const results = useMemo(() => report?.results ?? [], [report]);
   const attention = results.filter(needsAttention);
+  const verified = results.filter((r) => r.status === "PASS");
   const activeFilter = filter ?? (attention.length ? "attention" : "all");
-  const visible = activeFilter === "attention" ? attention : results;
+  const visible = activeFilter === "attention" ? attention : activeFilter === "verified" ? verified : results;
   const open = attention.filter((r) => !run?.review[r.field]).length;
   const locked = !!run?.approved_at;
   const current = results.find((r) => r.field === selected) ?? null;
@@ -417,7 +439,7 @@ export default function RunReview() {
                 )}
                 <p className="min-w-0 truncate">
                   {run.template_name}
-                  {report && ` · ${report.num_pages} pages · ${duration(report.seconds)} · ${report.llm_calls} model calls`}
+                  {report && ` · ${report.num_pages} pages · ${report.usage?.calls?.length ?? report.llm_calls} model calls`}
                   {report && report.ocr_pages.length > 0 && ` · ${report.ocr_pages.length} scanned pages read with OCR`}
                 </p>
               </div>
@@ -426,8 +448,14 @@ export default function RunReview() {
             <Skeleton className="h-4 w-56" />
           )}
         </div>
+        {run && <TimeTaken run={run} />}
         {run && (run.status === "done" || run.status === "failed") && (
           <div className="flex items-center gap-2">
+            {report?.usage && (
+              <Button variant="ghost" icon={<Receipt className="h-4 w-4" />} onClick={() => setShowReport(true)} title="Model calls, tokens, time and cost of this run">
+                Run report
+              </Button>
+            )}
             <Button variant="ghost" icon={<RotateCcw className="h-4 w-4" />} loading={rerun.isPending} onClick={() => rerun.mutate()} className="max-sm:hidden">
               Re-run
             </Button>
@@ -515,6 +543,7 @@ export default function RunReview() {
                   {(
                     [
                       ["attention", `Needs attention · ${attention.length}`],
+                      ["verified", `Verified · ${verified.length}`],
                       ["all", `All fields · ${results.length}`],
                     ] as const
                   ).map(([key, label]) => (
@@ -536,7 +565,9 @@ export default function RunReview() {
               <ul className="min-h-0 flex-1 overflow-y-auto">
                 {visible.length === 0 ? (
                   <li className="px-5 py-10 text-center text-sm text-ink-2">
-                    Nothing needs attention. Every field was verified on its source page.
+                    {activeFilter === "verified"
+                      ? "No field was verified on its source page yet."
+                      : "Nothing needs attention. Every field was verified on its source page."}
                     <button className="mt-2 block w-full text-accent hover:underline" onClick={() => setFilter("all")}>
                       Show all fields
                     </button>
@@ -583,6 +614,7 @@ export default function RunReview() {
           )}
         </div>
       </div>
+      {showReport && run?.report?.usage && <RunReportDialog run={run} onClose={() => setShowReport(false)} />}
     </div>
   );
 }

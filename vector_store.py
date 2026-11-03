@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import faiss
 from sentence_transformers import CrossEncoder
@@ -21,8 +23,10 @@ def create_embeddings(text_chunks: List[str], batch_size: int = 8) -> np.ndarray
     for i in range(0, len(text_chunks), batch_size):
         batch = text_chunks[i:i + batch_size]
         try:
+            t = time.perf_counter()
             resp = client.embeddings.create(model=EMBED_MODEL, input=batch)
-            record_usage(EMBED_MODEL, resp.usage)
+            record_usage(EMBED_MODEL, resp.usage, "Build index: embed page text", time.perf_counter() - t,
+                         f"pages {i + 1}-{i + len(batch)}")
             for itm in resp.data:
                 vec = np.array(itm.embedding, dtype=np.float32)
                 embeddings.append(vec)
@@ -30,8 +34,9 @@ def create_embeddings(text_chunks: List[str], batch_size: int = 8) -> np.ndarray
             logger.exception("Embedding batch failed: %s. Retrying individually.", e)
             for txt in batch:
                 try:
+                    t = time.perf_counter()
                     r = client.embeddings.create(model=EMBED_MODEL, input=[txt])
-                    record_usage(EMBED_MODEL, r.usage)
+                    record_usage(EMBED_MODEL, r.usage, "Build index: embed page text (retry)", time.perf_counter() - t)
                     vec = np.array(r.data[0].embedding, dtype=np.float32)
                     embeddings.append(vec)
                 except Exception as e2:

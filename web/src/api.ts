@@ -168,6 +168,21 @@ export interface Report {
   results: FieldResult[];
   page_texts: Record<string, string>;
   usage?: Usage;
+  timings?: { phases: { phase: string; seconds: number }[]; index_reused: boolean };
+}
+
+/** One model call of a run, in the order they started. */
+export interface ModelCall {
+  n: number;
+  step: string;
+  model: string;
+  detail: string | null;
+  input: number;
+  output: number;
+  seconds: number;
+  at: number;
+  cost_usd?: number | null;
+  local?: boolean;
 }
 
 /** Tokens used by every OpenAI call in a run, in total and per model. */
@@ -175,7 +190,8 @@ export interface Usage {
   input: number;
   output: number;
   total: number;
-  models: Record<string, { calls: number; input: number; output: number; total: number; cost_usd?: number | null }>;
+  models: Record<string, { calls: number; input: number; output: number; total: number; seconds?: number; cost_usd?: number | null; local?: boolean }>;
+  calls?: ModelCall[];
   cost_usd?: number;
   priced_all?: boolean;
   prices_checked?: string;

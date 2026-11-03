@@ -12,6 +12,7 @@ search scanned documents.
 
 import base64
 import json
+import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -69,8 +70,9 @@ def _fields_brief(fields: List[dict]) -> str:
     )
 
 
-def _respond(model: str, content: list, fields: List[dict]) -> List[dict]:
+def _respond(model: str, content: list, fields: List[dict], step: str = "Extraction") -> List[dict]:
     kwargs = {"temperature": 0} if _uses_temperature(model) else {}
+    t = time.perf_counter()
     resp = client.responses.create(
         model=model,
         instructions=EXTRACT_SYSTEM,
@@ -80,7 +82,7 @@ def _respond(model: str, content: list, fields: List[dict]) -> List[dict]:
         timeout=240,  # up to 40 PDF pages per call
         **kwargs,
     )
-    record_usage(model, resp.usage)
+    record_usage(model, resp.usage, step, time.perf_counter() - t)
     return json.loads(resp.output_text).get("fields", [])
 
 
@@ -104,7 +106,7 @@ def extract_pdf_range(path: Path, first: int, last: int, total: int,
          "file_data": f"data:application/pdf;base64,{data}"},
         {"type": "input_text", "text": f"{where}\n\nFields to extract:\n{_fields_brief(fields)}"},
     ]
-    return _respond(model, content, fields)
+    return _respond(model, content, fields, f"Extraction: PDF pages {first}-{last}")
 
 
 def extract_text_pages(pages: List[str], numbers: List[int], fields: List[dict], model: str) -> List[dict]:
@@ -112,7 +114,7 @@ def extract_text_pages(pages: List[str], numbers: List[int], fields: List[dict],
     body = "\n\n".join(f"=== PAGE {n} ===\n{pages[n - 1]}" for n in numbers)
     content = [{"type": "input_text",
                 "text": f"Fields to extract:\n{_fields_brief(fields)}\n\nDocument pages:\n{body}"}]
-    return _respond(model, content, fields)
+    return _respond(model, content, fields, f"Extraction: pages {numbers[0]}-{numbers[-1]} as text")
 
 
 def ocr_page(path: Path, page_no: int, model: str) -> str:
@@ -120,6 +122,7 @@ def ocr_page(path: Path, page_no: int, model: str) -> str:
     with fitz.open(path) as doc:
         png = doc[page_no - 1].get_pixmap(dpi=150).tobytes("png")
     kwargs = {"temperature": 0} if _uses_temperature(model) else {}
+    t = time.perf_counter()
     resp = client.responses.create(
         model=model,
         input=[{"role": "user", "content": [
@@ -129,7 +132,7 @@ def ocr_page(path: Path, page_no: int, model: str) -> str:
         ]}],
         **kwargs,
     )
-    record_usage(model, resp.usage)
+    record_usage(model, resp.usage, f"OCR: page {page_no}", time.perf_counter() - t)
     return resp.output_text or ""
 
 

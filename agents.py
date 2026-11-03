@@ -66,7 +66,7 @@ def default_models() -> Dict[str, str]:
 # -----------------------------
 # HELPERS
 # -----------------------------
-def llm_json(model: str, system: str, user: str, images: Optional[List[str]] = None) -> dict:
+def llm_json(model: str, system: str, user: str, images: Optional[List[str]] = None, step: str = "") -> dict:
     """images: base64 PNGs shown to the model after the text."""
     kwargs = {} if model.startswith(("o", "gpt-5")) else {"temperature": 0}
     content: Any = user
@@ -75,13 +75,14 @@ def llm_json(model: str, system: str, user: str, images: Optional[List[str]] = N
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}", "detail": "high"}}
             for b64 in images]
     for attempt in range(2):
+        t = time.perf_counter()
         resp = client.chat.completions.create(
             model=model,
             response_format={"type": "json_object"},
             messages=[{"role": "system", "content": system}, {"role": "user", "content": content}],
             **kwargs,
         )
-        record_usage(model, resp.usage)
+        record_usage(model, resp.usage, step + (" (retry: invalid JSON)" if attempt else ""), time.perf_counter() - t)
         try:
             return json.loads(resp.choices[0].message.content)
         except json.JSONDecodeError:
@@ -185,6 +186,7 @@ class PipelineState(TypedDict, total=False):
     doc_id: str
     num_pages: int
     ocr_pages: List[int]
+    index_reused: bool
     extract_jobs: List[List[int]]
     extraction_candidates: Annotated[List[dict], operator.add]
     qc_results: Annotated[List[dict], operator.add]
@@ -216,15 +218,15 @@ class FieldQCState(TypedDict, total=False):
 # -----------------------------
 # INGEST (text + OCR + RAG index)
 # -----------------------------
-def load_index(path: Path, ocr_model: str) -> Tuple[str, PageIndex, List[int]]:
-    """Build or load the page index for a document. Returns (doc_id, index, OCR'd pages)."""
+def load_index(path: Path, ocr_model: str) -> Tuple[str, PageIndex, List[int], bool]:
+    """Build or load the page index for a document. Returns (doc_id, index, OCR'd pages, reused)."""
     doc_id = file_hash(path)
     if doc_id in _INDEXES:
-        return doc_id, _INDEXES[doc_id], []
+        return doc_id, _INDEXES[doc_id], [], True
     folder = INDEX_DIR / f"{doc_id}_v{INDEX_VERSION}"
     if PageIndex.exists(folder):
         _INDEXES[doc_id] = PageIndex.load(folder)
-        return doc_id, _INDEXES[doc_id], []
+        return doc_id, _INDEXES[doc_id], [], True
 
     logger.info("Indexing %s", path.name)
     pages = extract_text_from_file(path)
@@ -233,15 +235,17 @@ def load_index(path: Path, ocr_model: str) -> Tuple[str, PageIndex, List[int]]:
         ocr_pages = [i for i, t in enumerate(pages, 1) if len(t.strip()) < OCR_MIN_CHARS]
         if ocr_pages:
             logger.info("OCR for %d page(s) without a text layer", len(ocr_pages))
+            # The run's call log lives in a context variable. Copy it here, in this thread, one copy per
+            # page: copied inside the pool it would be the pool thread's empty context.
+            contexts = [contextvars.copy_context() for _ in ocr_pages]
             with ThreadPoolExecutor(max_workers=AGENT_MAX_CONCURRENCY) as pool:
-                # copy_context: the run's token meter must follow the work into the pool threads
-                texts = list(pool.map(lambda p: contextvars.copy_context().run(ocr_page, path, p, ocr_model), ocr_pages))
+                texts = list(pool.map(lambda job: job[0].run(ocr_page, path, job[1], ocr_model), zip(contexts, ocr_pages)))
             for p, text in zip(ocr_pages, texts):
                 pages[p - 1] = text
     index = PageIndex(pages)
     index.save(folder)
     _INDEXES[doc_id] = index
-    return doc_id, index, ocr_pages
+    return doc_id, index, ocr_pages, False
 
 
 def plan_extraction(path: Path, idx: PageIndex) -> List[List[int]]:
@@ -264,8 +268,8 @@ def plan_extraction(path: Path, idx: PageIndex) -> List[List[int]]:
 
 def ingest(state: PipelineState) -> dict:
     path = Path(state["file_path"])
-    doc_id, idx, ocr_pages = load_index(path, state["models"]["ocr"])
-    return {"doc_id": doc_id, "num_pages": len(idx), "ocr_pages": ocr_pages,
+    doc_id, idx, ocr_pages, reused = load_index(path, state["models"]["ocr"])
+    return {"doc_id": doc_id, "num_pages": len(idx), "ocr_pages": ocr_pages, "index_reused": reused,
             "extract_jobs": plan_extraction(path, idx), "llm_calls": len(ocr_pages)}
 
 
@@ -336,7 +340,8 @@ def ground_extraction(state: PipelineState) -> dict:
             f"Your first answers (quotes not found in the text):\n{json.dumps(before, indent=2, ensure_ascii=False)}\n\n"
             f"Pages:\n{pages_block(idx, pages)}")
     try:
-        out = llm_json(state["models"]["extract"], GROUND_SYSTEM, user, page_images(Path(state["file_path"]), pages))
+        out = llm_json(state["models"]["extract"], GROUND_SYSTEM, user, page_images(Path(state["file_path"]), pages),
+                       step=f"Self-check: {', '.join(loose)}")
     except Exception as e:  # the first answer still goes to QC
         logger.warning("Re-reading ungrounded fields failed: %s", e)
         return {"llm_calls": 1}
@@ -414,7 +419,7 @@ def qc_search(s: FieldQCState) -> dict:
     value = "" if is_empty(ex.get("value")) else str(ex["value"])
     query = f"{spec['name'].replace('_', ' ')} {spec.get('description', '')} {value}".strip()
     checked = s.get("pages_checked", [])
-    hits = idx.search(query, k=QC_SEARCH_PAGES + len(checked))
+    hits = idx.search(query, k=QC_SEARCH_PAGES + len(checked), step=f"QC search: {spec['name']}")
     new_pages = [h["page"] for h in hits if h["page"] not in checked][:QC_SEARCH_PAGES]
     # Re-verify against the cited page AND the search hits together, so the auditor can choose
     return {"candidate_pages": checked + new_pages if new_pages else [], "searched": True, "located_by": "search"}
@@ -431,7 +436,8 @@ def qc_verify(s: FieldQCState) -> dict:
     images = page_images(Path(s["file_path"]), pages) if s.get("file_path") else []
     if images:
         user += f"\n\nImages of pages {', '.join(map(str, pages[:QC_MAX_IMAGES]))} follow, in that order."
-    verdict = llm_json(s["qc_model"], QC_SYSTEM, user, images)
+    verdict = llm_json(s["qc_model"], QC_SYSTEM, user, images,
+                       step=f"QC check: {spec['name']}" + (" (after search)" if s.get("searched") else ""))
     # Keep the request as sent (images stand in as labels) so reviewers can see what QC was given
     content = [{"type": "text", "text": user}] + [
         {"type": "image_url", "image_url": {"url": f"<page {p} as PNG, {QC_IMAGE_DPI} dpi>", "detail": "high"}}
@@ -715,9 +721,14 @@ def stream_pipeline(file_path: str, schema: Any, extraction: Any = None, qc_fiel
     n_fields = len(state["fields"]) if run_qc else 0
     n_batches, done_batches, done_fields = 1, 0, 0
     meter = start_meter()  # LangGraph copies this context into its worker threads
+    finished: Dict[str, float] = {}  # node -> seconds since start when it last finished
+    index_reused = False
     yield {"stage": "Reading document", "progress": 0.03}
     for update in PIPELINE.stream(state, {"max_concurrency": AGENT_MAX_CONCURRENCY}, stream_mode="updates"):
         for node, out in update.items():
+            finished[node] = time.perf_counter() - meter.started
+            if node == "ingest":
+                index_reused = bool(out.get("index_reused"))
             if node == "ingest":
                 n_batches = len(out.get("extract_jobs") or [1])
                 stage = "Checking fields" if state.get("extraction") else "Extracting fields"
@@ -735,7 +746,22 @@ def stream_pipeline(file_path: str, schema: Any, extraction: Any = None, qc_fiel
             elif node == "rules":
                 yield {"stage": "Running rule checks", "progress": 0.97}
             elif node == "report":
-                yield {"report": {**out["report"], "usage": meter.summary()}}
+                yield {"report": {**out["report"], "usage": meter.summary(),
+                                  "timings": {"phases": phase_times(finished), "index_reused": index_reused}}}
+
+
+PHASES = [("ingest", "Read pages, OCR and build the index"), ("merge_extraction", "Extraction"),
+          ("ground_extraction", "Self-check"), ("rules", "QC checks"), ("report", "Rules and report")]
+
+
+def phase_times(finished: Dict[str, float]) -> List[dict]:
+    """Seconds per phase, from when each phase's last node finished. Phases that didn't run are left out."""
+    out, last = [], 0.0
+    for node, name in PHASES:
+        if node in finished:
+            out.append({"phase": name, "seconds": round(finished[node] - last, 2)})
+            last = finished[node]
+    return out
 
 
 def run_pipeline(file_path: str, schema: Any, extraction: Any = None,

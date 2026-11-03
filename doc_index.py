@@ -7,6 +7,7 @@ Retrieval = FAISS + BM25 -> RRF -> cross-encoder.
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
@@ -15,7 +16,7 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 from rapidfuzz import fuzz
 
-from config import client, record_usage, EMBED_MODEL, QUOTE_MATCH_THRESHOLD
+from config import client, record_local, record_usage, EMBED_MODEL, QUOTE_MATCH_THRESHOLD, RERANKER_MODEL
 from vector_store import create_embeddings, build_faiss_index, RERANKER
 
 RRF_K = 60
@@ -68,14 +69,15 @@ class PageIndex:
         """1-based page number."""
         return self.pages[page_no - 1] if 1 <= page_no <= len(self.pages) else ""
 
-    def search(self, query: str, k: int = 3, candidates: int = 10) -> List[dict]:
+    def search(self, query: str, k: int = 3, candidates: int = 10, step: str = "Search") -> List[dict]:
         """Return the k most relevant pages as [{"page": 1-based, "score": float}]."""
         n = len(self.pages)
         if n == 0:
             return []
 
+        t = time.perf_counter()
         resp = client.embeddings.create(model=EMBED_MODEL, input=[query])
-        record_usage(EMBED_MODEL, resp.usage)
+        record_usage(EMBED_MODEL, resp.usage, f"{step}: embed the question", time.perf_counter() - t)
         q_emb = np.array(resp.data[0].embedding, dtype=np.float32).reshape(1, -1)
         faiss.normalize_L2(q_emb)
         _, I = self.faiss.search(q_emb, min(candidates, n))
@@ -94,15 +96,18 @@ class PageIndex:
 
         # Page score = best cross-encoder score over its windows
         pairs, owners = [], []
-        step = RERANK_WINDOW - RERANK_OVERLAP
+        stride = RERANK_WINDOW - RERANK_OVERLAP
         for i in top:
             text = self.pages[i] or " "
-            for start in range(0, max(len(text), 1), step):
+            for start in range(0, max(len(text), 1), stride):
                 pairs.append([query, text[start:start + RERANK_WINDOW]])
                 owners.append(i)
                 if start + RERANK_WINDOW >= len(text):
                     break
+        t = time.perf_counter()
         scores = RERANKER.predict(pairs)
+        record_local(RERANKER_MODEL, time.perf_counter() - t, f"{step}: rerank",
+                     f"{len(top)} pages, {len(pairs)} windows")
         best = {}
         for i, s in zip(owners, scores):
             best[i] = max(best.get(i, float("-inf")), float(s))
