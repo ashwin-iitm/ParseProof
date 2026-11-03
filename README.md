@@ -148,6 +148,7 @@ Each field ends up in one of three states:
 - **Verified**
 - **Mismatch**: the verifier found a different value on the page, with evidence.
 - **Needs review**
+- **Not in document**: an optional field that neither the extractor nor QC found. Nothing was verified, and it needs no decision. It has its own tab and is not counted as verified.
 
 ## Batches and exports
 

@@ -53,6 +53,7 @@ from text_processing import extract_text_from_file
 _INDEXES: Dict[str, PageIndex] = {}
 
 PASS, FAIL, REVIEW, NOT_CHECKED = "PASS", "FAIL", "REVIEW", "NOT_CHECKED"
+ABSENT = "ABSENT"  # an optional field the checker confirmed isn't in the document: nothing was verified
 OCR_MIN_CHARS = 25  # a PDF page with less text than this is treated as a scan
 INDEX_VERSION = 3  # bump when page text extraction changes (v3: column-aware text blocks)
 QC_MAX_IMAGES = 2  # page images sent with a full check (the text of every page it reads is sent too)
@@ -555,8 +556,8 @@ def qc_finalize(s: FieldQCState) -> dict:
     elif v == "incorrect" and s.get("evidence_ok"):
         status = FAIL
     elif v == "not_found" and is_empty(ex.get("value")) and not spec.get("required"):
-        status = PASS
-        notes.append("Confirmed absent on the pages checked.")
+        status = ABSENT
+        notes.append("Not in the document: neither the extractor nor the checker found it on the pages searched.")
     else:
         status = REVIEW
         if not s.get("pages_checked"):
@@ -822,7 +823,7 @@ def rules(state: PipelineState) -> dict:
 def report(state: PipelineState) -> dict:
     idx = _INDEXES[state["doc_id"]]
     results = state["final_results"]
-    summary = {s: sum(1 for r in results if r["status"] == s) for s in (PASS, FAIL, REVIEW, NOT_CHECKED)}
+    summary = {s: sum(1 for r in results if r["status"] == s) for s in (PASS, FAIL, REVIEW, ABSENT, NOT_CHECKED)}
 
     # Pages a human needs to open: for FAIL the evidence + the extractor's cited page,
     # for REVIEW everything the agent looked at

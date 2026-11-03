@@ -629,7 +629,7 @@ Source pages:
   <ul class="plain">
     <li><b>Locate (Python):</b> nothing was extracted, so there's no quote to look for. Go straight to search.</li>
     <li><b>Search:</b> the best 3 pages for “broker name · Insurance broker, agent or producer named on the policy”.</li>
-    <li><b>Verify (gpt-4.1-mini):</b> not found. Broker isn't a required field, so Decide gives <span class="pass">Verified</span> with the note “Confirmed absent on the pages checked”. If it were required, it would be <span class="rev">Needs review</span>.</li>
+    <li><b>Verify (gpt-4.1-mini):</b> not found. Broker isn't a required field, so it gets its own grey status, <b>Not in document</b>: nothing was extracted and nothing was verified, but it doesn't need a decision either. If it were required, it would be <span class="rev">Needs review</span>.</li>
   </ul>
 
   <h3>How the final status is decided</h3>
@@ -640,7 +640,7 @@ Source pages:
         <tr><td>Correct</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
         <tr><td>Incorrect, with a corrected value</td><td>Proof is on the page, and the corrected value is in the proof (digits must match exactly)</td><td class="fail">Mismatch</td></tr>
         <tr><td>Incorrect, but the correction is the same value (548867 and $548,867), or has the same words (only a repeated city or PIN dropped)</td><td>Proof is on the page</td><td class="pass">Verified</td></tr>
-        <tr><td>Not found, nothing was extracted, and the field isn't required</td><td>No proof needed</td><td class="pass">Verified (confirmed absent)</td></tr>
+        <tr><td>Not found, nothing was extracted, and the field isn't required</td><td>No proof needed</td><td><b>Not in document</b> (grey, its own tab; not counted as verified)</td></tr>
         <tr><td>Anything else: fake proof, a correction not in its own proof, a required field missing, no page found</td><td>Failed, or nothing to check</td><td class="rev">Needs review</td></tr>
       </tbody>
     </table>

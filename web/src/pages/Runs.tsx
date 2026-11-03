@@ -44,6 +44,11 @@ function Outcome({ run }: { run: RunListItem }) {
           <span className="font-medium text-review">{s.REVIEW}</span> to review
         </span>
       )}
+      {!!s.ABSENT && (
+        <span className="text-xs text-ink-3" title="Optional fields not in the document">
+          {s.ABSENT} not in doc
+        </span>
+      )}
       {attention === 0 && <span className="text-xs text-ink-3">{duration(run.seconds)}</span>}
       {run.tokens != null && (
         <span className="text-xs tabular-nums text-ink-3">

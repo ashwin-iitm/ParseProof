@@ -23,6 +23,7 @@ function cellClass(c: BatchCell) {
   if (c.reviewed) return "bg-accent/15 shadow-[inset_3px_0_0_rgb(var(--accent))]";
   if (c.status === "FAIL") return "bg-fail/15 text-fail shadow-[inset_3px_0_0_rgb(var(--fail))]";
   if (c.status === "REVIEW") return "bg-review/20 shadow-[inset_3px_0_0_rgb(var(--review))]";
+  if (c.status === "ABSENT") return "bg-ink/[0.04] text-ink-3";
   return "";
 }
 
@@ -214,6 +215,7 @@ export default function BatchDetail() {
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-ink-2" aria-label="Cell colours">
           <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-pass" />Verified</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border border-line bg-ink/[0.06]" />Not in document</span>
           <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-fail" />Mismatch</span>
           <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-review" />Needs review</span>
           <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-accent" />Resolved</span>

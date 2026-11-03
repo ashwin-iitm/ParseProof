@@ -1,4 +1,4 @@
-export type QCStatus = "PASS" | "FAIL" | "REVIEW" | "NOT_CHECKED";
+export type QCStatus = "PASS" | "FAIL" | "REVIEW" | "ABSENT" | "NOT_CHECKED";
 export type RunStatus = "queued" | "running" | "done" | "failed";
 export type FieldType = "string" | "number" | "date";
 
@@ -44,6 +44,7 @@ export interface Summary {
   PASS: number;
   FAIL: number;
   REVIEW: number;
+  ABSENT?: number;
   NOT_CHECKED: number;
 }
 

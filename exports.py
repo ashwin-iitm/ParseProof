@@ -25,7 +25,8 @@ from openpyxl.utils import get_column_letter
 
 from config import usage_cost
 
-STATUS_LABEL = {"PASS": "Verified", "FAIL": "Mismatch", "REVIEW": "Needs review", "NOT_CHECKED": "Not checked"}
+STATUS_LABEL = {"PASS": "Verified", "FAIL": "Mismatch", "REVIEW": "Needs review", "ABSENT": "Not in document",
+                "NOT_CHECKED": "Not checked"}
 SOURCE_LABEL = {"extracted": "Extracted", "verified": "QC corrected", "manual": "Edited by reviewer"}
 RUN_STATUS_LABEL = {"done": "Complete", "failed": "Failed", "queued": "Queued", "running": "Running"}
 
@@ -89,6 +90,7 @@ def run_summary(run: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, An
         "verified": count("PASS"),
         "mismatches": count("FAIL"),
         "needs_review": count("REVIEW"),
+        "not_in_document": count("ABSENT"),
         "resolved": sum(1 for r in rows if r["reviewed"]),
         "open_issues": sum(1 for r in rows if r["open"]),
         "seconds": report.get("seconds"),
@@ -364,6 +366,7 @@ def to_xlsx(runs: List[Dict[str, Any]], keys: bool, title: str) -> bytes:
         ("No colour", "Verified: a second model confirmed the value on its source page.", None),
         ("Red", "Mismatch: QC found a different value. The cell holds the QC value; hover for the evidence.", FILL["FAIL"]),
         ("Amber", "Needs review: QC could not confirm the value, or a rule check failed.", FILL["REVIEW"]),
+        ("No colour, empty", "Not in document: an optional field neither the extractor nor QC found. Nothing to verify.", None),
         ("Blue", "Resolved: a reviewer chose or edited this value.", FILL["resolved"]),
         ("Grey row", "The run did not finish (failed or still running), so it has no values.", FILL["muted"]),
     ]:

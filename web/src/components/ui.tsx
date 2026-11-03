@@ -88,6 +88,7 @@ export const QC_META: Record<QCStatus, { label: string; dot: string; text: strin
   PASS: { label: "Verified", dot: "bg-pass", text: "text-pass", bg: "bg-pass-weak" },
   FAIL: { label: "Mismatch", dot: "bg-fail", text: "text-fail", bg: "bg-fail-weak" },
   REVIEW: { label: "Needs review", dot: "bg-review", text: "text-review", bg: "bg-review-weak" },
+  ABSENT: { label: "Not in document", dot: "bg-ink-3", text: "text-ink-2", bg: "bg-ink/[0.06]" },
   NOT_CHECKED: { label: "Not checked", dot: "bg-ink-3", text: "text-ink-3", bg: "bg-paper" },
 };
 

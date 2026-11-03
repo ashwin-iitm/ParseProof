@@ -102,6 +102,7 @@ function finalSource(r: FieldResult, decision?: ReviewDecision) {
     return "You typed this value.";
   }
   if (r.status === "PASS") return "The extractor's value, confirmed by QC and by Python's check of the page.";
+  if (r.status === "ABSENT") return "Nothing to verify: neither the extractor nor the checker found this field in the document. It's optional, so it doesn't need a decision.";
   if (r.status === "FAIL") return "QC's value: QC found a different value and Python confirmed its evidence is on the page. Accept it or change it.";
   return "The extractor's value. QC couldn't confirm it, so it needs your decision.";
 }
@@ -319,7 +320,7 @@ export default function RunReview() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const toast = useToast();
-  const [filter, setFilter] = useState<"attention" | "verified" | "all" | null>(null);
+  const [filter, setFilter] = useState<"attention" | "verified" | "absent" | "all" | null>(null);
   const [showReport, setShowReport] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -334,8 +335,10 @@ export default function RunReview() {
   const results = useMemo(() => report?.results ?? [], [report]);
   const attention = results.filter(needsAttention);
   const verified = results.filter((r) => r.status === "PASS");
+  const absent = results.filter((r) => r.status === "ABSENT");
   const activeFilter = filter ?? (attention.length ? "attention" : "all");
-  const visible = activeFilter === "attention" ? attention : activeFilter === "verified" ? verified : results;
+  const visible =
+    activeFilter === "attention" ? attention : activeFilter === "verified" ? verified : activeFilter === "absent" ? absent : results;
   const open = attention.filter((r) => !run?.review[r.field]).length;
   const locked = !!run?.approved_at;
   const current = results.find((r) => r.field === selected) ?? null;
@@ -513,7 +516,8 @@ export default function RunReview() {
             <>
               <div className="border-b border-line px-5 py-4">
                 <p className="text-sm text-ink">
-                  <span className="font-semibold">{report.summary.PASS}</span> of {results.length} fields verified on their source page.
+                  <span className="font-semibold">{report.summary.PASS}</span> of {results.length - absent.length} fields verified on their source page.
+                  {absent.length > 0 && <span className="text-ink-2"> {absent.length} not in the document.</span>}
                   {attention.length > 0 && (
                     <>
                       {" "}
@@ -544,9 +548,12 @@ export default function RunReview() {
                     [
                       ["attention", `Needs attention · ${attention.length}`],
                       ["verified", `Verified · ${verified.length}`],
+                      ["absent", `Not in document · ${absent.length}`],
                       ["all", `All fields · ${results.length}`],
                     ] as const
-                  ).map(([key, label]) => (
+                  )
+                    .filter(([key]) => key !== "absent" || absent.length > 0)
+                    .map(([key, label]) => (
                     <button
                       key={key}
                       role="tab"
