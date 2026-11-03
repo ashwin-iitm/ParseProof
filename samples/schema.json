@@ -1,0 +1,19 @@
+{
+  "fields": [
+    {"name": "agreement_number", "description": "Agreement reference number", "type": "string", "required": true},
+    {"name": "effective_date", "description": "Date the agreement takes effect", "type": "date", "required": true},
+    {"name": "client_name", "description": "Legal name of the client party", "type": "string", "required": true},
+    {"name": "term_months", "description": "Initial term of the agreement in months", "type": "number"},
+    {"name": "payment_terms", "description": "Number of days within which invoices must be paid", "type": "string"},
+    {"name": "liability_cap", "description": "Maximum aggregate liability amount", "type": "string"},
+    {"name": "governing_law", "description": "Law that governs the agreement", "type": "string"},
+    {"name": "termination_notice", "description": "Notice period for termination for convenience", "type": "string"},
+    {"name": "subtotal", "description": "First invoice subtotal before tax", "type": "number"},
+    {"name": "gst", "description": "GST amount on the first invoice", "type": "number"},
+    {"name": "total", "description": "Total amount payable on the first invoice", "type": "number"},
+    {"name": "client_signatory", "description": "Name of the person signing for the client", "type": "string"}
+  ],
+  "rules": [
+    {"type": "sum", "fields": ["subtotal", "gst"], "equals": "total", "tolerance": 0.01}
+  ]
+}

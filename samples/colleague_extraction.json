@@ -1,0 +1,15 @@
+{
+  "_comment": "Simulates output from an existing LLM extractor, with planted mistakes: payment_terms wrong (cites the late-payment clause), liability_cap cites the wrong page, total has transposed digits and a made-up quote, term_months was missed, effective_date has no citation.",
+  "agreement_number":   {"value": "MSA-2026-0417", "page": 1, "quote": "Agreement No.: MSA-2026-0417"},
+  "effective_date":     {"value": "2026-03-15"},
+  "client_name":        {"value": "Northwind Logistics Private Limited", "page": 1, "quote": "Northwind Logistics Private Limited, a company incorporated in India"},
+  "term_months":        {"value": null},
+  "payment_terms":      {"value": "30 days", "page": 10, "quote": "remains unpaid after 30 days beyond its due date"},
+  "liability_cap":      {"value": "INR 25,000,000", "page": 12, "quote": "shall not exceed INR 25,000,000"},
+  "governing_law":      {"value": "Laws of India", "page": 18, "quote": "governed by the laws of India"},
+  "termination_notice": {"value": "90 days", "page": 19, "quote": "ninety (90) days' prior written notice"},
+  "subtotal":           {"value": "1,840,000.00", "page": 27, "quote": "Subtotal: INR 1,840,000.00"},
+  "gst":                {"value": "331,200.00", "page": 27, "quote": "GST @ 18%: INR 331,200.00"},
+  "total":              {"value": "2,117,200.00", "page": 27, "quote": "Total payable: INR 2,117,200.00"},
+  "client_signatory":   {"value": "Priya Raman", "page": 30, "quote": "Name: Priya Raman"}
+}

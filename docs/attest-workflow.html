@@ -1,0 +1,371 @@
+<title>AdoVerse Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: one reading column; the flowchart breaks out wider and scrolls sideways on phones. */
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --ink: #1b1d21;
+    --ink-2: #4a4f57;
+    --ink-3: #636870;
+    --line: #dedad0;
+    --accent: #1f4fa3;
+    /* who does each step */
+    --py-fill: #ffffff;   --py-line: #8a8e95;
+    --ex-fill: #e6edf9;   --ex-line: #1f4fa3;
+    --qc-fill: #efe8f7;   --qc-line: #6b3fa0;
+    --hu-fill: #f1efe8;   --hu-line: #1b1d21;
+    /* outcomes */
+    --pass: #2f6b45; --pass-weak: #e7f1ea;
+    --fail: #a8322a; --fail-weak: #f8e9e7;
+    --review: #8a5a00; --review-weak: #f8eedb;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17181a; --surface: #1f2023; --ink: #ecebe6; --ink-2: #c1c0ba; --ink-3: #9d9c96; --line: #34353a; --accent: #8fb0ee;
+      --py-fill: #1f2023; --py-line: #8d9097;
+      --ex-fill: #1c2a44; --ex-line: #8fb0ee;
+      --qc-fill: #2b2238; --qc-line: #b993e6;
+      --hu-fill: #2a2a27; --hu-line: #ecebe6;
+      --pass: #6fcf97; --pass-weak: #1d2f24; --fail: #ff8a7a; --fail-weak: #3a2220; --review: #f0b456; --review-weak: #352a17;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17181a; --surface: #1f2023; --ink: #ecebe6; --ink-2: #c1c0ba; --ink-3: #9d9c96; --line: #34353a; --accent: #8fb0ee;
+    --py-fill: #1f2023; --py-line: #8d9097;
+    --ex-fill: #1c2a44; --ex-line: #8fb0ee;
+    --qc-fill: #2b2238; --qc-line: #b993e6;
+    --hu-fill: #2a2a27; --hu-line: #ecebe6;
+    --pass: #6fcf97; --pass-weak: #1d2f24; --fail: #ff8a7a; --fail-weak: #3a2220; --review: #f0b456; --review-weak: #352a17;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); }
+  .page {
+    max-width: 880px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 48px 72px;
+    display: grid; gap: 56px;
+  }
+  .prose { max-width: 68ch; }
+  h1 { font-size: 2.1rem; line-height: 1.15; font-weight: 600; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+  h2 { font-size: 1.35rem; line-height: 1.25; font-weight: 600; margin: 0 0 14px; text-wrap: balance; }
+  p { margin: 0 0 12px; }
+  .lead { font-size: 1.12rem; color: var(--ink-2); margin-top: 14px; }
+  code, .mono { font-family: var(--mono); font-size: 0.9em; }
+  ::selection { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+  a { color: var(--accent); text-underline-offset: 3px; }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 18px 0 14px; font-size: 0.88rem; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 18px; height: 12px; border-radius: 3px; border: 1.5px solid; }
+  .sw.py { background: var(--py-fill); border-color: var(--py-line); border-style: dashed; }
+  .sw.ex { background: var(--ex-fill); border-color: var(--ex-line); }
+  .sw.qc { background: var(--qc-fill); border-color: var(--qc-line); }
+  .sw.hu { background: var(--hu-fill); border-color: var(--hu-line); }
+
+  /* flowchart */
+  figure { margin: 0; }
+  .chart { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .chart svg { display: block; width: 100%; min-width: 660px; height: auto; color: var(--ink); }
+  figcaption { font-size: 0.9rem; color: var(--ink-3); margin-top: 10px; max-width: 70ch; }
+  .n { stroke-width: 1.5; }
+  .n.py { fill: var(--py-fill); stroke: var(--py-line); stroke-dasharray: 5 3; }
+  .n.ex { fill: var(--ex-fill); stroke: var(--ex-line); }
+  .n.qc { fill: var(--qc-fill); stroke: var(--qc-line); }
+  .n.hu { fill: var(--hu-fill); stroke: var(--hu-line); }
+  .n.ok { fill: var(--pass-weak); stroke: var(--pass); }
+  .n.bad { fill: var(--fail-weak); stroke: var(--fail); }
+  .n.rev { fill: var(--review-weak); stroke: var(--review); }
+  .group { fill: none; stroke: var(--ink-3); stroke-dasharray: 2 4; stroke-width: 1.5; }
+  .t { fill: var(--ink); font: 600 13.5px var(--sans); }
+  .s { fill: var(--ink-2); font: 400 11.5px var(--sans); }
+  .lab { fill: var(--ink-3); font: 500 11.5px var(--sans); }
+  .glab { fill: var(--ink-2); font: 600 12px var(--sans); }
+  .t.ok { fill: var(--pass); } .t.bad { fill: var(--fail); } .t.rev { fill: var(--review); }
+  .edge { stroke: currentColor; stroke-width: 1.5; fill: none; }
+  .edge.loop { stroke: var(--qc-line); }
+  .edge.dash { stroke-dasharray: 4 4; stroke: var(--ink-3); }
+
+  /* steps */
+  .steps { display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; counter-increment: s; }
+  .steps li::before {
+    content: counter(s); width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-3);
+    display: grid; place-items: center; font: 500 0.85rem var(--mono); color: var(--ink-2); margin-top: 1px;
+  }
+  .steps b { font-weight: 600; }
+
+  /* not this / this */
+  .versus { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .versus > div { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--surface); min-width: 0; }
+  .versus h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+  .versus .no h3 { color: var(--fail); }
+  .versus .yes h3 { color: var(--pass); }
+  .versus p { font-size: 0.95rem; color: var(--ink-2); margin: 0; }
+
+  /* worked example */
+  .trace { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+  .trace header { padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 0.92rem; color: var(--ink-2); }
+  .trace ol { margin: 0; padding: 6px 0; list-style: none; }
+  .trace li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding: 12px 20px; border-top: 1px solid var(--line); }
+  .trace li:first-child { border-top: 0; }
+  .who { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.02em; display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .who::before { content: ""; width: 10px; height: 10px; border-radius: 2px; border: 1.5px solid; flex: none; }
+  .who.py::before { background: var(--py-fill); border-color: var(--py-line); border-style: dashed; }
+  .who.ex::before { background: var(--ex-fill); border-color: var(--ex-line); }
+  .who.qc::before { background: var(--qc-fill); border-color: var(--qc-line); }
+  .who.hu::before { background: var(--hu-fill); border-color: var(--hu-line); }
+  .trace p { margin: 0; font-size: 0.95rem; }
+  .bad-v { color: var(--fail); font-family: var(--mono); font-size: 0.9em; }
+  .ok-v { color: var(--pass); font-family: var(--mono); font-size: 0.9em; font-weight: 500; }
+
+  /* table */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.93rem; }
+  th, td { text-align: left; vertical-align: top; padding: 11px 16px; border-top: 1px solid var(--line); }
+  thead th { border-top: 0; font-size: 0.8rem; color: var(--ink-3); font-weight: 600; letter-spacing: 0.03em; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+
+  /* questions */
+  .qa { display: grid; gap: 22px; }
+  .qa h3 { font-size: 1.02rem; font-weight: 600; margin: 0 0 4px; }
+  .qa p { margin: 0; color: var(--ink-2); }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 1.7rem; }
+    .trace li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  }
+</style>
+
+<main class="page">
+  <header class="prose">
+    <h1>How AdoVerse checks a document</h1>
+    <p class="lead">OpenAI extracts every field once. Then each value is checked against the page it came from by a second, independent model, and plain Python code makes sure neither model made anything up. A person only looks at the fields that didn't check out.</p>
+  </header>
+
+  <section>
+    <h2>The workflow</h2>
+    <div class="legend" aria-label="Legend: who does each step">
+      <span><i class="sw py"></i>Python code (no AI)</span>
+      <span><i class="sw ex"></i>OpenAI extractor (gpt-4.1)</span>
+      <span><i class="sw qc"></i>Second model, the checker (gpt-4o)</span>
+      <span><i class="sw hu"></i>A person</span>
+    </div>
+    <figure>
+      <div class="chart">
+        <svg viewBox="0 0 760 1040" role="img" aria-label="Flowchart: upload, read and index pages, OpenAI extracts value, page and quote for every field, then a QC agent per field locates the page, searches the RAG index if needed, has a second model verify the value, has Python confirm the evidence, and ends in Verified, Mismatch or Needs review; rule checks run, then a person reviews only flagged fields.">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <!-- 1. Upload -->
+          <rect class="n hu" x="90" y="24" width="340" height="56" rx="8"/>
+          <text class="t" x="260" y="48" text-anchor="middle">Upload a document, pick a template</text>
+          <text class="s" x="260" y="66" text-anchor="middle">Invoice, loss run, policy… or one drafted by AI</text>
+          <line class="edge" x1="260" y1="80" x2="260" y2="106" marker-end="url(#arrow)"/>
+
+          <!-- 2. Read + index -->
+          <rect class="n py" x="90" y="108" width="340" height="64" rx="8"/>
+          <text class="t" x="260" y="134" text-anchor="middle">Read every page</text>
+          <text class="s" x="260" y="153" text-anchor="middle">Text of each page · OCR for scanned pages</text>
+          <line class="edge" x1="430" y1="140" x2="478" y2="140" marker-end="url(#arrow)"/>
+          <text class="lab" x="454" y="132" text-anchor="middle">builds</text>
+
+          <rect class="n py" x="480" y="108" width="260" height="64" rx="8"/>
+          <text class="t" x="610" y="134" text-anchor="middle">RAG page index</text>
+          <text class="s" x="610" y="153" text-anchor="middle">vectors + keywords, reranked</text>
+
+          <line class="edge" x1="260" y1="172" x2="260" y2="210" marker-end="url(#arrow)"/>
+
+          <!-- 3. Extract -->
+          <rect class="n ex" x="90" y="212" width="340" height="64" rx="8"/>
+          <text class="t" x="260" y="238" text-anchor="middle">Extract all fields</text>
+          <text class="s" x="260" y="257" text-anchor="middle">Reads the whole PDF, text and page images</text>
+          <line class="edge" x1="260" y1="276" x2="260" y2="370" marker-end="url(#arrow)"/>
+          <text class="lab" x="272" y="304">for each field:</text>
+          <text class="lab" x="272" y="320">value + page + exact quote</text>
+
+          <!-- QC agent group -->
+          <rect class="group" x="60" y="338" width="692" height="460" rx="12"/>
+          <text class="glab" x="78" y="358">QC agent · runs once per field, all fields at the same time</text>
+
+          <!-- 4a. Locate -->
+          <rect class="n py" x="90" y="372" width="340" height="64" rx="8"/>
+          <text class="t" x="260" y="398" text-anchor="middle">Is the quote on the cited page?</text>
+          <text class="s" x="260" y="417" text-anchor="middle">Text match on that one page</text>
+
+          <line class="edge" x1="430" y1="404" x2="478" y2="404" marker-end="url(#arrow)"/>
+          <text class="lab" x="454" y="396" text-anchor="middle">no</text>
+
+          <!-- RAG search -->
+          <rect class="n py" x="480" y="372" width="260" height="64" rx="8"/>
+          <text class="t" x="610" y="398" text-anchor="middle">Search the RAG index</text>
+          <text class="s" x="610" y="417" text-anchor="middle">finds the 1–3 likeliest pages</text>
+
+          <line class="edge dash" x1="610" y1="172" x2="610" y2="370" marker-end="url(#arrow)"/>
+          <text class="lab" x="620" y="262">same index,</text>
+          <text class="lab" x="620" y="278">reused here</text>
+
+          <line class="edge" x1="260" y1="436" x2="260" y2="478" marker-end="url(#arrow)"/>
+          <text class="lab" x="272" y="462">yes · use that page</text>
+
+          <path class="edge" d="M560 436 V518 H432" marker-end="url(#arrow)"/>
+          <text class="lab" x="496" y="510" text-anchor="middle">those pages</text>
+
+          <!-- 4b. Verify -->
+          <rect class="n qc" x="90" y="480" width="340" height="78" rx="8"/>
+          <text class="t" x="260" y="505" text-anchor="middle">Check the value against the page</text>
+          <text class="s" x="260" y="524" text-anchor="middle">Sees only those pages, text and image</text>
+          <text class="s" x="260" y="541" text-anchor="middle">Answers: correct · incorrect · not found + a quote</text>
+
+          <line class="edge" x1="260" y1="558" x2="260" y2="598" marker-end="url(#arrow)"/>
+
+          <!-- 4c. Check the checker -->
+          <rect class="n py" x="90" y="600" width="340" height="64" rx="8"/>
+          <text class="t" x="260" y="626" text-anchor="middle">Is that quote really on the page?</text>
+          <text class="s" x="260" y="645" text-anchor="middle">And does any correction appear in it?</text>
+
+          <path class="edge loop" d="M430 632 H700 V438" marker-end="url(#arrow)"/>
+          <text class="lab" x="565" y="624" text-anchor="middle">incorrect or not found:</text>
+          <text class="lab" x="565" y="652" text-anchor="middle">search once more</text>
+
+          <!-- split to outcomes -->
+          <line class="edge" x1="260" y1="664" x2="260" y2="690"/>
+          <line class="edge" x1="185" y1="690" x2="635" y2="690"/>
+          <line class="edge" x1="185" y1="690" x2="185" y2="706" marker-end="url(#arrow)"/>
+          <line class="edge" x1="410" y1="690" x2="410" y2="706" marker-end="url(#arrow)"/>
+          <line class="edge" x1="635" y1="690" x2="635" y2="706" marker-end="url(#arrow)"/>
+
+          <!-- 4d. Outcomes -->
+          <rect class="n ok" x="85" y="708" width="200" height="72" rx="8"/>
+          <text class="t ok" x="185" y="734" text-anchor="middle">Verified</text>
+          <text class="s" x="185" y="752" text-anchor="middle">value confirmed on</text>
+          <text class="s" x="185" y="767" text-anchor="middle">its page</text>
+
+          <rect class="n bad" x="310" y="708" width="200" height="72" rx="8"/>
+          <text class="t bad" x="410" y="734" text-anchor="middle">Mismatch</text>
+          <text class="s" x="410" y="752" text-anchor="middle">a different value found,</text>
+          <text class="s" x="410" y="767" text-anchor="middle">with page and proof</text>
+
+          <rect class="n rev" x="535" y="708" width="200" height="72" rx="8"/>
+          <text class="t rev" x="635" y="734" text-anchor="middle">Needs review</text>
+          <text class="s" x="635" y="752" text-anchor="middle">couldn't be confirmed</text>
+          <text class="s" x="635" y="767" text-anchor="middle">either way</text>
+
+          <!-- merge -->
+          <line class="edge" x1="185" y1="780" x2="185" y2="822"/>
+          <line class="edge" x1="410" y1="780" x2="410" y2="822"/>
+          <line class="edge" x1="635" y1="780" x2="635" y2="822"/>
+          <line class="edge" x1="185" y1="822" x2="635" y2="822"/>
+          <line class="edge" x1="260" y1="822" x2="260" y2="848" marker-end="url(#arrow)"/>
+
+          <!-- 5. Rules -->
+          <rect class="n py" x="90" y="850" width="340" height="60" rx="8"/>
+          <text class="t" x="260" y="875" text-anchor="middle">Rule checks across fields</text>
+          <text class="s" x="260" y="894" text-anchor="middle">required filled · valid numbers and dates · totals add up</text>
+          <line class="edge" x1="260" y1="910" x2="260" y2="943" marker-end="url(#arrow)"/>
+
+          <!-- 6. Review -->
+          <rect class="n hu" x="90" y="945" width="340" height="72" rx="8"/>
+          <text class="t" x="260" y="971" text-anchor="middle">Review only what's flagged</text>
+          <text class="s" x="260" y="990" text-anchor="middle">Evidence highlighted on the page</text>
+          <text class="s" x="260" y="1006" text-anchor="middle">Accept or edit · approve · export JSON / CSV</text>
+        </svg>
+      </div>
+      <figcaption>The extractor runs once over the whole document. Everything inside the dotted box happens separately for each field, in parallel. The purple loop is the only retry: if the checker disagrees or can't find the value, the RAG index is searched for more pages and the checker looks once more.</figcaption>
+    </figure>
+  </section>
+
+  <section class="prose">
+    <h2>In plain words</h2>
+    <ol class="steps">
+      <li><div><b>Extract once.</b> OpenAI reads the whole document and returns every field with three things: the value, the page it is on, and an exact quote copied from that page.</div></li>
+      <li><div><b>Find the right page.</b> Python checks that the quote really is on the page the extractor named. If it isn't, the RAG index (built from the document's pages when it was uploaded) searches for the one to three pages most likely to contain that field.</div></li>
+      <li><div><b>Check with a second model.</b> A different model gets only those pages, as text and as images, plus the extracted value. It answers correct, incorrect (and gives the right value), or not found, and it must quote its evidence.</div></li>
+      <li><div><b>Check the checker.</b> Python confirms the checker's quote really exists on that page, and that any correction it suggests actually appears in the quote. If not, the field goes to a person.</div></li>
+      <li><div><b>Review the exceptions.</b> Rule checks run across all fields, then a person reviews only the flagged fields, each shown on its page with the evidence highlighted.</div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 class="prose">It does not extract twice and compare</h2>
+    <div class="versus">
+      <div class="no">
+        <h3>Not this</h3>
+        <p>Extract with OpenAI, extract again with our own code, then compare the two answers. Our code doesn't read values out of documents at all.</p>
+      </div>
+      <div class="yes">
+        <h3>This</h3>
+        <p>Extract once with OpenAI, then <b>verify</b> each value. Our code (the RAG search and the quote checks) decides <i>where to look</i> and <i>whether the proof is real</i>. The second model decides <i>whether the value matches the page</i>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="prose">One field, start to finish</h2>
+    <div class="trace">
+      <header>A real catch from testing: the supplier's tax ID (GSTIN) on a <b>scanned</b> two-page invoice.</header>
+      <ol>
+        <li><span class="who py">Python</span><p>Page 1 has no text layer, so it's read with OCR and added to the RAG index.</p></li>
+        <li><span class="who ex">Extractor</span><p>Returns <span class="bad-v">29AAMCM471Q1Z6</span>, page 1. It misread the scan: two characters swapped and one dropped.</p></li>
+        <li><span class="who py">Python</span><p>Finds the extractor's quote on page 1, so page 1 is the page to check. No search needed.</p></li>
+        <li><span class="who qc">Checker</span><p>Reads page 1 and answers <b>incorrect</b>: the page says <span class="ok-v">29AAKCM4471Q1Z6</span>, quoting “GSTIN: 29AAKCM4471Q1Z6”.</p></li>
+        <li><span class="who py">Python</span><p>Confirms that quote is on page 1 and that the corrected value is inside it. The field is marked <b>Mismatch</b>.</p></li>
+        <li><span class="who hu">Person</span><p>Sees one flagged field out of eleven, with page 1 open. Clicks “Use verified value” and approves. The export carries the correct GSTIN.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="prose">Who does what</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Part</th><th>What it does</th><th>Why it's there</th></tr></thead>
+        <tbody>
+          <tr><td>OpenAI extractor</td><td>Reads the whole document once and returns value, page and quote for every field.</td><td>It sees text and page images, so it handles scans, tables and layouts.</td></tr>
+          <tr><td>RAG index</td><td>Our hybrid search over the document's pages: vector similarity plus keyword match, reranked.</td><td>When a citation is missing or wrong, it finds the right page without sending the whole document again.</td></tr>
+          <tr><td>Checker model</td><td>A different model that judges one field against one to three pages.</td><td>An independent second opinion. It doesn't share the extractor's blind spots, and it reads far less, so it's cheap and focused.</td></tr>
+          <tr><td>Python checks</td><td>Confirm every quote really exists on its page; run required, number, date and total checks.</td><td>Models can invent text. Plain code can't, so nothing is accepted without proof that's actually on the page.</td></tr>
+          <tr><td>Person</td><td>Reviews only Mismatch and Needs review fields, then approves.</td><td>Final responsibility stays with a human, but they open a few pages, not the whole document.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Questions colleagues ask</h2>
+    <div class="qa">
+      <div>
+        <h3>Why not ask the same model to check itself?</h3>
+        <p>A model tends to repeat its own mistakes. A different model, looking only at the one page, is a real second opinion.</p>
+      </div>
+      <div>
+        <h3>What if the extractor names the wrong page?</h3>
+        <p>Python searches the whole document for the extractor's quote. If the quote isn't found, the RAG index finds the likeliest pages. The report notes that the citation was wrong.</p>
+      </div>
+      <div>
+        <h3>Does it work on scanned documents?</h3>
+        <p>Yes. Pages with no text are read with OCR so they can be searched and checked. On scans the evidence shows as a quote beside the field rather than highlighted on the page.</p>
+      </div>
+      <div>
+        <h3>Do I still need to look at everything?</h3>
+        <p>No. Verified fields have been confirmed on their source page with real evidence. You review the Mismatch and Needs review fields, then approve.</p>
+      </div>
+      <div>
+        <h3>What can't it do yet?</h3>
+        <p>Each field is one value. Repeating tables, like every line item or every claim on a loss run, are captured as totals and counts rather than row by row.</p>
+      </div>
+    </div>
+  </section>
+</main>

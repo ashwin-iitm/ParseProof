@@ -1,0 +1,59 @@
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Auditor's desk: warm paper chrome so the document page is the brightest thing on screen. */
+:root {
+  --paper: 246 245 241;
+  --panel: 251 250 247;
+  --surface: 255 255 255;
+  --ink: 27 29 33;
+  --ink-2: 74 79 87;
+  --ink-3: 99 104 112;
+  --line: 227 224 216;
+  --line-strong: 207 203 192;
+  --accent: 31 79 163;
+  --accent-hover: 25 65 137;
+  --accent-weak: 232 238 249;
+  --pass: 47 107 69;
+  --pass-weak: 231 241 234;
+  --fail: 168 50 42;
+  --fail-weak: 248 233 231;
+  --review: 138 90 0;
+  --review-weak: 248 238 219;
+  --mark: 251 231 161;
+  color-scheme: light;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-paper font-sans text-base text-ink antialiased;
+    font-feature-settings: "tnum" 1;
+  }
+  ::selection { background: rgb(var(--accent) / 0.18); }
+  :focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 1px; border-radius: 4px; }
+  input, textarea, select { caret-color: rgb(var(--accent)); }
+  * { scrollbar-width: thin; scrollbar-color: rgb(var(--line-strong)) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--line-strong)); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  a { text-underline-offset: 3px; }
+}
+
+/* pdf.js text layer: text stays invisible, evidence gets a highlighter stroke */
+/* The text layer is its own stacking context, so it must blend as a whole for the
+   canvas glyphs underneath to stay readable through the highlight */
+.react-pdf__Page__textContent.textLayer { mix-blend-mode: multiply; }
+.textLayer mark {
+  background: rgb(var(--mark));
+  color: transparent;
+  border-radius: 2px;
+}
+.react-pdf__Page__canvas { display: block; }
